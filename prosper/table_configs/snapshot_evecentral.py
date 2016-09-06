@@ -2,7 +2,7 @@
 
 from os import path
 
-import MySQLdb
+import pandas
 
 from prosper.common.utilities import get_config, create_logger
 import prosper.warehouse.Connection as Connection
