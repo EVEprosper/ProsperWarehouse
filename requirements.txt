@@ -1,0 +1,8 @@
+configparser==3.5.0
+numpy==1.11.1
+pandas==0.18.1
+-e git+https://lockefox:ZdcMv4.^Bd8Xfaum@github.com/EVEprosper/ProsperCommon.git@c4e6a438b9af747e9a3ebf6ece891f01ca39130f#egg=ProsperCommon
+-e git+https://lockefox:ZdcMv4.^Bd8Xfaum@github.com/EVEprosper/ProsperWarehouse.git@422ea87c7cf9786e54f2cff504525e0eae9a1695#egg=ProsperWarehouse
+python-dateutil==2.5.3
+pytz==2016.6.1
+six==1.10.0
