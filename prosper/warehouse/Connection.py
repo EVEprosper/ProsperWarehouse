@@ -76,11 +76,11 @@ class ConnectionException(Exception):
         )
         return error_msg
 
-class CreateTableError(Exception):
+class CreateTableError(ConnectionException):
     '''unable to create table (if none existed)'''
     pass
 
-class TableKeysMissing(Exception):
+class TableKeysMissing(ConnectionException):
     '''missing keys in config.  Can recreate from db connection...
         but manual listing for easier code for now'''
     pass
