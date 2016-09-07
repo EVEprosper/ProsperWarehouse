@@ -2,7 +2,7 @@
 
 import abc
 import importlib.util
-import configparser
+#import configparser
 
 #from prosper.common.utilities import get_config
 class Database(metaclass=abc.ABCMeta):
@@ -11,7 +11,7 @@ class Database(metaclass=abc.ABCMeta):
         '''basic info about all databases'''
         self.datasource_name = datasource_name
         self.table_name = ''
-        self.connection,self.cursor = self.get_connection()
+        self.__connection,self.__cursor = self.get_connection()
         #TODO: con/cur method only works for direct db, not RESTy
 
         self.primary_keys, self.data_keys = self.get_keys()
@@ -59,7 +59,10 @@ class Database(metaclass=abc.ABCMeta):
 
 class SQLTable(Database):
     '''child class for handling TimeSeries databases'''
-    pass
+    def __del__(self):
+        '''release connection/cursor'''
+        self.__cursor.close()
+        self.__connection.close()
     #TODO: write helper methods for handling timeseries data
 
 class ConnectionException(Exception):
@@ -85,12 +88,16 @@ class TableKeysMissing(ConnectionException):
         but manual listing for easier code for now'''
     pass
 
+## TODO: UTILTIES ##
 def bool_can_write(DatabaseClass):
     '''return permissions if writing to db is allowed'''
     pass
 
-def get_config_values(config_object, key_name):
+## TODO: UTILTIES ##
+def get_config_values(config_object, key_name, debug=False):
     '''parses standardized config object and returns vals, or defaults'''
+    if debug:
+        print('Parsing config for: {key_name}'.format(key_name=key_name))
     connection_values = {}
     connection_values['schema'] = config_object.get(key_name, 'db_schema')
     connection_values['host']   = config_object.get(key_name, 'db_host')
@@ -106,6 +113,8 @@ def get_config_values(config_object, key_name):
        bool(connection_values['table'])  and \
        bool(connection_values['port']):
         #if (ANY) blank, use defaults
+        if debug:
+            print('--USING DEFAULT TABLE CONNECTION RULES--')
         connection_values['schema'] = config_object.get('default', 'db_schema')
         connection_values['host']   = config_object.get('default', 'db_host')
         connection_values['user']   = config_object.get('default', 'db_user')
@@ -114,3 +123,43 @@ def get_config_values(config_object, key_name):
         connection_values['table']  = key_name
 
     return connection_values
+
+## TODO: UTILTIES ##
+def bool_test_headers(
+        existing_headers,
+        defined_headers,
+        logger=None,
+        debug=False
+):
+    '''tests if existing_headers == defined_headers'''
+    return_bool = False
+    #http://stackoverflow.com/a/3462160
+    mismatch_list = list(set(existing_headers) - set(defined_headers))
+
+    if len(mismatch_list) > 0:
+        a_list = []
+        b_list = []
+        for element in mismatch_list:
+            if element in existing_headers:
+                a_list.append(element)
+            elif element in defined_headers:
+                b_list.append(element)
+            else:
+                print('ORPHAN ELEMENT: ' + str(element))
+
+        error_msg = 'Table Headers not equivalent: {a_group}; {b_group}'.\
+            format(
+                #TODO: IF a_list: str() else: None
+                a_group='existing_headers: ' + ','.join(a_list),
+                b_group='defined_headers:' + ','.join(b_list)
+            )
+
+        if logger:
+            logger.ERROR(error_msg)
+
+        if debug:
+            print(error_msg)
+    else:
+        return_bool = True
+
+    return return_bool

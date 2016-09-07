@@ -51,7 +51,32 @@ class snapshot_evecentral(Connection.SQLTable):
 
     def test_table(self):
         '''test table connection/contents'''
-        #check headers
+        ## Check if table exists ##
+        exists_query = \
+        '''SHOW TABLES LIKE \'{table_name}\''''.\
+            format(
+                table_name=CONNECTION_VALUES['table_name']
+            )
+        self.__cursor.execute(exists_query)
+        exists_result = self.__cursor.fetchall()
+        if len(exists_result) != 1:
+            if DEBUG:
+                print(
+                    'TABLE {schema_name}.{table_name} NOT FOUND, creating table'.\
+                    format(
+                        schema_name=CONNECTION_VALUES['schema'],
+                        table_name =CONNECTION_VALUES['table']
+                    ))
+            self.create_table()
+        else:
+            if DEBUG:
+                print(
+                    'TABLE {schema_name}.{table_name} EXISTS'.\
+                    format(
+                        schema_name=CONNECTION_VALUES['schema'],
+                        table_name =CONNECTION_VALUES['table']
+                    ))
+        ## Check if headers config is correct ##
         all_keys = []
         all_keys.append(self.index_key)
         all_keys.append(self.primary_keys)
@@ -66,12 +91,22 @@ class snapshot_evecentral(Connection.SQLTable):
                 schema_name=CONNECTION_VALUES['schema'],
                 table_name =CONNECTION_VALUES['table']
             )
-        self.cursor.execute(header_query)
-        headers = self.cursor.fetchall()
+        self.__cursor.execute(header_query)
+        headers = self.__cursor.fetchall()
         if DEBUG:
             print(headers)
+        if not Connection.bool_test_headers(
+                headers,
+                all_keys,
+                debug=DEBUG,
+                #logger=Logger #TODO
+        ):
+            error_msg = 'Table headers not equivalent'
+            print(error_msg)
+            return False
     #TODO: maybe too complicated
 
+## MAIN = TEST ##
 if __name__ == '__main__':
     print(ME)
     DEBUG = True
@@ -79,3 +114,8 @@ if __name__ == '__main__':
         CONNECTION_VALUES['table_name']
     )
     TEST_OBJECT.test_table()
+    TEST_OBJECT.__cursor.execute('''SELECT * FROM {table_name} LIMIT 1'''.\
+        format(
+            table_name=CONNECTION_VALUES['table_name']
+        ))
+    print(TEST_OBJECT.__cursor.fetchall())
