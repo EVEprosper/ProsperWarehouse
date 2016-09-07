@@ -52,7 +52,7 @@ class Database(metaclass=abc.ABCMeta):
         '''validate that datasource exists, and is ready for data'''
         pass
 
-class TimeSeries(Database):
+class SQLTable(Database):
     '''child class for handling TimeSeries databases'''
     pass
     #TODO: write helper methods for handling timeseries data
@@ -82,5 +82,26 @@ def bool_can_write(DatabaseClass):
 
 def get_config_values(config_object, key_name):
     '''parses standardized config object and returns vals, or defaults'''
-    pass
+    connection_values = {}
+    connection_values['db_schema'] = config_object.get(key_name, 'db_schema')
+    connection_values['db_host']   = config_object.get(key_name, 'db_host')
+    connection_values['db_user']   = config_object.get(key_name, 'db_user')
+    connection_values['db_pw']     = config_object.get(key_name, 'db_pw')
+    connection_values['db_port']   = int(config_object.get(key_name, 'db_port'))
+    connection_values['table_name']= config_object.get(key_name, 'table_name')
 
+    if bool(connection_values['db_schema']) and \
+       bool(connection_values['db_host'])   and \
+       bool(connection_values['db_user'])   and \
+       bool(connection_values['db_pw'])     and \
+       bool(connection_values['table_name'])and \
+       bool(connection_values['db_port']):
+        #if (ANY) blank, use defaults
+        connection_values['db_schema'] = config_object.get('default', 'db_schema')
+        connection_values['db_host']   = config_object.get('default', 'db_host')
+        connection_values['db_user']   = config_object.get('default', 'db_user')
+        connection_values['db_pw']     = config_object.get('default', 'db_pw')
+        connection_values['db_port']   = int(config_object.get('default', 'db_port'))
+        connection_values['table_name']= key_name
+
+    return connection_values

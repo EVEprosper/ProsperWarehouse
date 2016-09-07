@@ -2,8 +2,8 @@ configparser==3.5.0
 mysql-connector==2.1.4
 numpy==1.11.1
 pandas==0.18.1
--e git+https://github.com/EVEprosper/ProsperCommon.git@master#egg=ProsperCommon
--e git+https://github.com/EVEprosper/ProsperWarehouse.git@master#egg=ProsperWarehouse
+-e git+https://github.com/EVEprosper/ProsperCommon.git@c4e6a438b9af747e9a3ebf6ece891f01ca39130f#egg=ProsperCommon
+-e git+https://github.com/EVEprosper/ProsperWarehouse.git@f4627120a2a53a06ce8afd66163bf60cbb26695a#egg=ProsperWarehouse
 python-dateutil==2.5.3
 pytz==2016.6.1
 six==1.10.0

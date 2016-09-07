@@ -24,3 +24,7 @@ class snapshot_evecentral(Connection.SQLTable):
 if __name__ == '__main__':
     print(ME)
     DEBUG = True
+    TEST_OBJECT = snapshot_evecentral(
+        CONNECTION_VALUES['table_name']
+    )
+    TEST_OBJECT.test_table()
