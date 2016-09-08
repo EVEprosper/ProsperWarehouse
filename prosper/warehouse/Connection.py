@@ -61,6 +61,8 @@ class SQLTable(Database):
     '''child class for handling TimeSeries databases'''
     def __del__(self):
         '''release connection/cursor'''
+        #__del__ needs to be in lowest-child to execute:
+        #http://www.electricmonk.nl/log/2008/07/07/python-destructor-and-garbage-collection-notes/
         self.__cursor.close()
         self.__connection.close()
     #TODO: write helper methods for handling timeseries data
