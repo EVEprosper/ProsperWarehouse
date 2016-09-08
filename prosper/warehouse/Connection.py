@@ -141,19 +141,25 @@ def bool_test_headers(
     if len(mismatch_list) > 0:
         a_list = []
         b_list = []
+        orphan_list = []
         for element in mismatch_list:
             if element in existing_headers:
                 a_list.append(element)
             elif element in defined_headers:
                 b_list.append(element)
             else:
-                print('ORPHAN ELEMENT: ' + str(element))
+                #TODO: logger/debug?
+                orphan_list.append(element)
+                #print('ORPHAN ELEMENT: ' + str(element))
 
-        error_msg = 'Table Headers not equivalent: {a_group}; {b_group}'.\
+        error_msg = 'Table Headers not equivalent:{a_group}{b_group}{orphan_group}'.\
             format(
-                #TODO: IF a_list: str() else: None
-                a_group='existing_headers: ' + ','.join(a_list),
-                b_group='defined_headers:' + ','.join(b_list)
+                a_group=' unique existing_headers: (' + ','.join(a_list) + ')'\
+                    if a_list else None,
+                b_group=' unique defined_headers: (' + ','.join(b_list) + ')'\
+                    if b_list else None,
+                orphan_group=' orphan elements: (' + ','.join(orphan_list) + ')'\
+                    if orphan_list else None
             )
 
         if logger:
