@@ -7,13 +7,15 @@ import mysql.connector
 
 from prosper.common.utilities import get_config, create_logger
 import prosper.warehouse.Connection as Connection
+import prosper.warehouse.Utilities as table_utils
 
 HERE = path.abspath(path.dirname(__file__))
 ME = __file__.replace('.py', '')
 CONFIG_ABSPATH = path.join(HERE, 'table_config.cfg')
 
+print('SNAPSHOT: GET_CONFIG')
 config = get_config(CONFIG_ABSPATH)
-CONNECTION_VALUES = Connection.get_config_values(config, ME)
+CONNECTION_VALUES = table_utils.get_config_values(config, ME)
 
 DEBUG = False
 class snapshot_evecentral(Connection.SQLTable):
@@ -22,7 +24,7 @@ class snapshot_evecentral(Connection.SQLTable):
         '''get primary/data keys from config file'''
         tmp_primary_keys = []
         tmp_data_keys = []
-
+        print('--SNAPSHOT: get_keys()')
         try:
             tmp_primary_keys = ','.split(config.get(ME, 'primary_keys'))
             tmp_data_keys = ','.split(config.get(ME, 'data_keys'))
@@ -37,6 +39,7 @@ class snapshot_evecentral(Connection.SQLTable):
 
     def get_connection(self):
         '''get con/cur for db connections'''
+        print('--SNAPSHOT: get_connection()')
         tmp_connection = mysql.connector.connect(
             user    =CONNECTION_VALUES['user'],
             password=CONNECTION_VALUES['passwd'],
@@ -51,14 +54,16 @@ class snapshot_evecentral(Connection.SQLTable):
 
     def test_table(self):
         '''test table connection/contents'''
+        print('--SNAPSHOT: test_table()')
         ## Check if table exists ##
+        print('----table_exists: start')
         exists_query = \
         '''SHOW TABLES LIKE \'{table_name}\''''.\
             format(
-                table_name=CONNECTION_VALUES['table_name']
+                table_name=CONNECTION_VALUES['table']
             )
-        self.__cursor.execute(exists_query)
-        exists_result = self.__cursor.fetchall()
+        self.cursor.execute(exists_query)
+        exists_result = self.cursor.fetchall()
         if len(exists_result) != 1:
             if DEBUG:
                 print(
@@ -77,6 +82,7 @@ class snapshot_evecentral(Connection.SQLTable):
                         table_name =CONNECTION_VALUES['table']
                     ))
         ## Check if headers config is correct ##
+        print('----table_headers: start')
         all_keys = []
         all_keys.append(self.index_key)
         all_keys.append(self.primary_keys)
@@ -85,17 +91,17 @@ class snapshot_evecentral(Connection.SQLTable):
         header_query = \
         '''SELECT `COLUMN_NAME`
             FROM `INFORMATION_SCHEMA`.`COLUMNS`
-            WHERE `TABLE_SCHEMA`='{schema_name}'
-            AND `TABLE_NAME`='{table_name}'''.\
+            WHERE `TABLE_SCHEMA`=\'{schema_name}\'
+            AND `TABLE_NAME`=\'{table_name}\''''.\
             format(
                 schema_name=CONNECTION_VALUES['schema'],
                 table_name =CONNECTION_VALUES['table']
             )
-        self.__cursor.execute(header_query)
-        headers = self.__cursor.fetchall()
+        self.cursor.execute(header_query)
+        headers = self.cursor.fetchall()
         if DEBUG:
             print(headers)
-        if not Connection.bool_test_headers(
+        if not table_utils.bool_test_headers(
                 headers,
                 all_keys,
                 debug=DEBUG,
@@ -106,16 +112,27 @@ class snapshot_evecentral(Connection.SQLTable):
             return False
     #TODO: maybe too complicated
 
+    def create_table(self):
+        pass
+
+    def get_data(self, *args, **kwargs):
+        pass
+
+    def put_data(self, payload):
+        pass
+
 ## MAIN = TEST ##
 if __name__ == '__main__':
     print(ME)
     DEBUG = True
+    CONNECTION_VALUES = table_utils.get_config_values(config, ME, DEBUG)
+    print(CONNECTION_VALUES)
     TEST_OBJECT = snapshot_evecentral(
-        CONNECTION_VALUES['table_name']
+        CONNECTION_VALUES['table']
     )
     TEST_OBJECT.test_table()
     TEST_OBJECT.__cursor.execute('''SELECT * FROM {table_name} LIMIT 1'''.\
         format(
-            table_name=CONNECTION_VALUES['table_name']
+            table_name=CONNECTION_VALUES['table']
         ))
     print(TEST_OBJECT.__cursor.fetchall())

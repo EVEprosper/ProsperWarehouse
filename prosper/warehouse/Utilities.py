@@ -18,12 +18,12 @@ def get_config_values(config_object, key_name, debug=False):
     connection_values['port']   = int(config_object.get(key_name, 'db_port'))
     connection_values['table']  = config_object.get(key_name, 'table_name')
 
-    if bool(connection_values['schema']) and \
-       bool(connection_values['host'])   and \
-       bool(connection_values['user'])   and \
-       bool(connection_values['passwd']) and \
-       bool(connection_values['table'])  and \
-       bool(connection_values['port']):
+    if not(bool(connection_values['schema']) and \
+           bool(connection_values['host'])   and \
+           bool(connection_values['user'])   and \
+           bool(connection_values['passwd']) and \
+           bool(connection_values['table'])  and \
+           bool(connection_values['port'])):
         #if (ANY) blank, use defaults
         if debug:
             print('--USING DEFAULT TABLE CONNECTION RULES--')
