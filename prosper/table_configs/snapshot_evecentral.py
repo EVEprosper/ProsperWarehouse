@@ -57,6 +57,7 @@ class snapshot_evecentral(Connection.SQLTable):
         print('--SNAPSHOT: test_table()')
         ## Check if table exists ##
         print('----table_exists: start')
+        #TODO: move to mysql_table_exists(schema_name, table_name, con, cur)
         exists_query = \
         '''SHOW TABLES LIKE \'{table_name}\''''.\
             format(
@@ -65,6 +66,7 @@ class snapshot_evecentral(Connection.SQLTable):
         self.cursor.execute(exists_query)
         exists_result = self.cursor.fetchall()
         if len(exists_result) != 1:
+            #TODO: move to mysql_create_table(schema_name, table_name, table_path, con, cur)
             if DEBUG:
                 print(
                     'TABLE {schema_name}.{table_name} NOT FOUND, creating table'.\
@@ -88,6 +90,7 @@ class snapshot_evecentral(Connection.SQLTable):
         all_keys.append(self.primary_keys)
         all_keys.append(self.data_keys)
 
+        #TODO: move to mysql_get_headers(schema_name, table_name, con, cur)
         header_query = \
         '''SELECT `COLUMN_NAME`
             FROM `INFORMATION_SCHEMA`.`COLUMNS`
