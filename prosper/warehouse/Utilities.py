@@ -81,3 +81,27 @@ def bool_test_headers(
         return_bool = True
 
     return return_bool
+
+def mysql_table_exists(
+        #schema_name,
+        table_name,
+        #db_connection,
+        db_cursor,
+        debug=False,
+        logger=None
+):
+    '''test mysql to see if table exists'''
+    exists_query = \
+    '''SHOW TABLES LIKE \'{table_name}\''''.\
+        format(
+            table_name=table_name
+        )
+
+    if debug:
+        print('----exists_query: ' + exists_query)
+    if logger:
+        logger.debug('----exists_query: ' + exists_query)
+
+    db_cursor.execute(exists_query)
+    exists_result = db_cursor.fetchall()
+

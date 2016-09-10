@@ -5,13 +5,29 @@ import importlib.util
 #import configparser
 
 #from prosper.common.utilities import get_config
+class TableType:
+    '''enumeration for tabletypes'''
+    MySQL = 'MySQL'
+    Postgress = 'Postgress'
+    NOTDEFINED = 'NOTDEFINED'
+
+    def set_table_type(self, string_enum):
+        '''roll enum from string'''
+        if string_enum.lower() == 'mysql':
+            return self.MySQL
+        elif string_enum.lower() == 'postgress':
+            return self.Postgress
+
+        else:
+            return self.NOTDEFINED
+
 class Database(metaclass=abc.ABCMeta):
     '''parent class for holding database connection info'''
     def __init__(self, datasource_name):
         '''basic info about all databases'''
         self.datasource_name = datasource_name
         self.table_name = ''
-        self.connection,self.cursor = self.get_connection() #TODO: __private?
+        self._connection,self._cursor = self.get_connection() #TODO: __private?
         print('--DATABASE: made con/cur')
         #TODO: con/cur method only works for direct db, not RESTy
 
@@ -19,6 +35,8 @@ class Database(metaclass=abc.ABCMeta):
         print('--DATABASE: got keys from config')
 
         self.index_key = None
+
+        self.table_type = self._define_table_type()
         try:
             self.test_table()
         except Exception as error_msg:
@@ -26,6 +44,11 @@ class Database(metaclass=abc.ABCMeta):
 
     def __str__(self):
         return self.datasource_name
+
+    @abc.abstractmethod
+    def _define_table_type(self):
+        '''helps define technology for class definition'''
+        pass
 
     @abc.abstractmethod
     def get_keys(self):
@@ -55,19 +78,46 @@ class Database(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def create_table(self):
-        '''create the table if needed'''
-        #TODO: required?
+    def _direct_query(self, query_str):
+        '''some tests require direct SQL execution.  Support those calls internally ONLY'''
         pass
 
 class SQLTable(Database):
     '''child class for handling TimeSeries databases'''
+    def _direct_query(self, query_str):
+        '''direct query for SQL tables'''
+        #TODO: if/else check for every query seems wasteful, rework?
+        if self.table_type == TableType.MySQL:
+            #MYSQL EXECUTE
+            try:
+                self._cursor.execute(query_str)
+                query_result = self._cursor.fetchall()
+            except Exception as error_msg:
+                raise error_msg
+
+            return query_result
+
+        elif self.table_type == TableType.Postgress:
+            #POSTGRESS EXECUTE
+            pass
+
+        else:
+            raise UnsupportedTableType(
+                'unsupported table type: ' + str(self.table_type),
+                self.table_name
+                )
+
+    def _create_table(self, table_create_path):
+        '''handles executing table-create query'''
+        pass
+
     def __del__(self):
         '''release connection/cursor'''
         #__del__ needs to be in lowest-child to execute:
         #http://www.electricmonk.nl/log/2008/07/07/python-destructor-and-garbage-collection-notes/
-        self.cursor.close()
-        self.connection.close()
+        self._cursor.close()
+        self._connection.close()
+
     #TODO: write helper methods for handling timeseries data
 
 class ConnectionException(Exception):
@@ -93,3 +143,6 @@ class TableKeysMissing(ConnectionException):
         but manual listing for easier code for now'''
     pass
 
+class UnsupportedTableType(ConnectionException):
+    '''unable to execute command, not supported'''
+    pass
