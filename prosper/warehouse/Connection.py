@@ -4,6 +4,8 @@ import abc
 import importlib.util
 #import configparser
 
+from plumbum import local
+
 #from prosper.common.utilities import get_config
 class TableType:
     '''enumeration for tabletypes'''
@@ -33,7 +35,8 @@ class Database(metaclass=abc.ABCMeta):
 
         self.primary_keys, self.data_keys = self.get_keys()
         print('--DATABASE: got keys from config')
-
+        #TODO: SQL style only vvv
+        self.table_name, self.schema_name = self._set_info()
         self.index_key = None
 
         self.table_type = self._define_table_type()
@@ -53,6 +56,11 @@ class Database(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def get_keys(self):
         '''get primary/data keys for query manipulation'''
+        pass
+
+    @abc.abstractmethod
+    def _set_info(self):
+        '''save useful info about table/datasource'''
         pass
 
     @abc.abstractmethod
@@ -107,7 +115,7 @@ class SQLTable(Database):
                 self.table_name
                 )
 
-    def _create_table(self, table_create_path):
+    def _create_table(self, table_create_path, local_path=None):
         '''handles executing table-create query'''
         pass
 

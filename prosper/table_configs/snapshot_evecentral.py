@@ -40,6 +40,10 @@ class snapshot_evecentral(Connection.SQLTable):
             )
 
         return tmp_primary_keys, tmp_data_keys
+    def _set_info(self):
+        '''save info about table/datasource'''
+        #TODO move up?
+        return CONNECTION_VALUES['table'], CONNECTION_VALUES['schema']
 
     def get_connection(self):
         '''get con/cur for db connections'''
@@ -52,7 +56,6 @@ class snapshot_evecentral(Connection.SQLTable):
             port    =CONNECTION_VALUES['port']
         )
         tmp_cursor = tmp_connection.cursor()
-        self.table_name = CONNECTION_VALUES['table'] #TODO: this is bad
 
         return tmp_connection, tmp_cursor
 
@@ -61,7 +64,6 @@ class snapshot_evecentral(Connection.SQLTable):
         if DEBUG: print('--SNAPSHOT: test_table()')
         ## Check if table exists ##
         if DEBUG: print('----table_exists: start')
-        #TODO: move to mysql_table_exists(schema_name, table_name, con, cur)
         exists_query = \
         '''SHOW TABLES LIKE \'{table_name}\''''.\
             format(
@@ -70,10 +72,9 @@ class snapshot_evecentral(Connection.SQLTable):
         try:
             exists_result = self._direct_query(exists_query)
         except Exception as error_msg:
+            #TODO logger
             raise error_msg
 
-        #self.cursor.execute(exists_query)
-        #exists_result = self.cursor.fetchall()
         if len(exists_result) != 1:
             #TODO: move to mysql_create_table(schema_name, table_name, table_path, con, cur)
             if DEBUG:
@@ -83,7 +84,10 @@ class snapshot_evecentral(Connection.SQLTable):
                         schema_name=CONNECTION_VALUES['schema'],
                         table_name =CONNECTION_VALUES['table']
                     ))
-            self.create_table()
+            self._create_table(
+                config.get(ME, 'table_create_file'),
+                HERE
+            )
         else:
             if DEBUG:
                 print(
