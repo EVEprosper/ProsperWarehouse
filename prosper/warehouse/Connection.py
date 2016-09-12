@@ -29,14 +29,10 @@ class Database(metaclass=abc.ABCMeta):
         '''basic info about all databases'''
         self.datasource_name = datasource_name
         self.table_name = ''
-        self._connection,self._cursor = self.get_connection() #TODO: __private?
         print('--DATABASE: made con/cur')
-        #TODO: con/cur method only works for direct db, not RESTy
 
         self.primary_keys, self.data_keys = self.get_keys()
         print('--DATABASE: got keys from config')
-        #TODO: SQL style only vvv
-        self.table_name, self.schema_name = self._set_info()
         self.index_key = None
 
         self.table_type = self._define_table_type()
@@ -92,6 +88,12 @@ class Database(metaclass=abc.ABCMeta):
 
 class SQLTable(Database):
     '''child class for handling TimeSeries databases'''
+    def __init__(self, datasource_name):
+        '''Traditional SQL-style hook setup'''
+        self._connection,self._cursor = self.get_connection()
+        self.table_name, self.schema_name = self._set_info()
+        super().__init__(datasource_name)
+
     def _direct_query(self, query_str):
         '''direct query for SQL tables'''
         #TODO: if/else check for every query seems wasteful, rework?
