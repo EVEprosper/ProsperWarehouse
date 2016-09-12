@@ -3,6 +3,7 @@
 from os import path
 
 import pandas
+from plumbum import local
 import mysql.connector
 
 from prosper.common.utilities import get_config, create_logger
@@ -20,9 +21,29 @@ CONNECTION_VALUES = table_utils.get_config_values(config, ME)
 DEBUG = False
 class snapshot_evecentral(Connection.SQLTable):
     '''worker class for handling eve_central data'''
+    def set_local_path(self):
+        return HERE
+
     def _define_table_type(self):
         '''set TableType enum'''
         return Connection.TableType.MySQL
+
+    def get_table_create_string(self):
+        '''get/parse table-create file'''
+        full_table_filepath = None
+        table_create_path = config.get(ME, 'table_create_file')
+        if '..' in table_create_path:
+            local.cwd.chdir(HERE)
+            full_table_filepath = local.path(table_create_path)
+        else:
+            full_table_filepath = local.path(table_create_path)
+
+        #TODO: test `exists`
+        full_create_string = ''
+        with open(full_table_filepath, 'r') as file_handle:
+            full_create_string = file_handle.read()
+
+        return full_create_string
 
     def get_keys(self):
         '''get primary/data keys from config file'''
@@ -64,45 +85,17 @@ class snapshot_evecentral(Connection.SQLTable):
         if DEBUG: print('--SNAPSHOT: test_table()')
         ## Check if table exists ##
         if DEBUG: print('----table_exists: start')
-        exists_query = \
-        '''SHOW TABLES LIKE \'{table_name}\''''.\
-            format(
-                table_name=CONNECTION_VALUES['table']
-            )
         try:
-            exists_result = self._direct_query(exists_query)
+            self.test_table_exists(
+                CONNECTION_VALUES['table'],
+                CONNECTION_VALUES['schema'],
+                DEBUG
+            )
         except Exception as error_msg:
             #TODO logger
             raise error_msg
+        if DEBUG: print('----test_table_exists: PASS')
 
-        if len(exists_result) != 1:
-            #TODO: move to mysql_create_table(schema_name, table_name, table_path, con, cur)
-            if DEBUG:
-                print(
-                    '---- TABLE {schema_name}.{table_name} NOT FOUND, creating table'.\
-                    format(
-                        schema_name=CONNECTION_VALUES['schema'],
-                        table_name =CONNECTION_VALUES['table']
-                    ))
-            self._create_table(
-                config.get(ME, 'table_create_file'),
-                HERE
-            )
-            if DEBUG:
-                print(
-                    '---- {schema_name}.{table_name} CREATED'.\
-                    format(
-                        schema_name=CONNECTION_VALUES['schema'],
-                        table_name =CONNECTION_VALUES['table']
-                    ))
-        else:
-            if DEBUG:
-                print(
-                    '---- TABLE {schema_name}.{table_name} EXISTS'.\
-                    format(
-                        schema_name=CONNECTION_VALUES['schema'],
-                        table_name =CONNECTION_VALUES['table']
-                    ))
         ## Check if headers config is correct ##
         if DEBUG: print('----table_headers: start')
         all_keys = []
@@ -110,32 +103,18 @@ class snapshot_evecentral(Connection.SQLTable):
         all_keys.extend(self.primary_keys)
         all_keys.extend(self.data_keys)
 
-        if DEBUG: print(all_keys)
-
-        #TODO: move to mysql_get_headers(schema_name, table_name, con, cur)
-        header_query = \
-        '''SELECT `COLUMN_NAME`
-            FROM `INFORMATION_SCHEMA`.`COLUMNS`
-            WHERE `TABLE_SCHEMA`=\'{schema_name}\'
-            AND `TABLE_NAME`=\'{table_name}\''''.\
-            format(
-                schema_name=CONNECTION_VALUES['schema'],
-                table_name =CONNECTION_VALUES['table']
-            )
-        headers = self._direct_query(header_query)
-        headers = table_utils.mysql_cleanup_results(headers)
-
-        if DEBUG:
-            print(headers)
-        if not table_utils.bool_test_headers(
-                headers,
+        try:
+            self.test_table_headers(
+                CONNECTION_VALUES['table'],
+                CONNECTION_VALUES['schema'],
                 all_keys,
-                debug=DEBUG,
-                #logger=Logger #TODO
-        ):
-            error_msg = 'Table headers not equivalent'
-            print(error_msg)
-            return False
+                DEBUG
+            )
+        except Exception as error_msg:
+            #TODO: logger
+            raise error_msg
+        if DEBUG: print('----test_table_headers: PASS')
+
     #TODO: maybe too complicated
 
     def get_data(self, *args, **kwargs):

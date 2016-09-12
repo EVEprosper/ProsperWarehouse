@@ -6,6 +6,7 @@ import importlib.util
 
 from plumbum import local
 
+import prosper.warehouse.Utilities as table_utils #TODO, required?
 #from prosper.common.utilities import get_config
 class TableType:
     '''enumeration for tabletypes'''
@@ -29,6 +30,7 @@ class Database(metaclass=abc.ABCMeta):
         '''basic info about all databases'''
         self.datasource_name = datasource_name
         self.table_name = ''
+        self.local_path = self.set_local_path()
         print('--DATABASE: made con/cur')
 
         self.index_key = None
@@ -44,6 +46,11 @@ class Database(metaclass=abc.ABCMeta):
 
     def __str__(self):
         return self.datasource_name
+
+    @abc.abstractmethod
+    def set_local_path(self):
+        '''set CWD path for sourcing files'''
+        pass
 
     @abc.abstractmethod
     def _define_table_type(self):
@@ -118,19 +125,9 @@ class SQLTable(Database):
                 self.table_name
                 )
 
-    def _create_table(self, table_create_path, local_path=None):
+    def _create_table(self, full_create_string):
         '''handles executing table-create query'''
-        full_table_filepath = None
-        if '..' in table_create_path:
-            local.cwd.chdir(local_path)
-            full_table_filepath = local.path(table_create_path)
-        else:
-            full_table_filepath = local.path(table_create_path)
 
-        #TODO: test `exists`
-        full_create_string = ''
-        with open(full_table_filepath, 'r') as file_handle:
-            full_create_string = file_handle.read()
 
         command_list = full_create_string.split(';')
         for command in command_list:
@@ -143,6 +140,120 @@ class SQLTable(Database):
             self._cursor.execute(command)
             self._connection.commit()
 
+    def test_table_exists(
+            self,
+            table_name,
+            schema_name,
+            debug = False,
+            logger = None
+    ):
+        '''basic test for table existing'''
+        exists_query = ''
+        exists_result = False #TODO: remove?
+        if self.table_type == TableType.MySQL:
+            exists_query = \
+            '''SHOW TABLES LIKE \'{table_name}\''''.\
+                format(
+                    table_name=table_name
+                )
+        else:
+            raise UnsupportedTableType(
+                'unsupported table type: ' + str(self.table_type),
+                table_name
+            )
+
+        try:
+            exists_result = self._direct_query(exists_query)
+        except Exception as error_msg:
+            #TODO logger
+            raise error_msg
+
+        if len(exists_result) != 1:
+            #TODO logger
+            if debug:
+                print(
+                    '---- TABLE {schema_name}.{table_name} NOT FOUND, creating table'.\
+                    format(
+                        schema_name=schema_name,
+                        table_name =table_name
+                    ))
+            try:
+                self._create_table(self.get_table_create_string())
+            except Exception as error_msg:
+                raise error_msg
+
+            if debug:
+                print(
+                    '---- {schema_name}.{table_name} CREATED'.\
+                    format(
+                        schema_name=schema_name,
+                        table_name =table_name
+                    ))
+        else:
+            if debug:
+                print(
+                    '---- TABLE {schema_name}.{table_name} EXISTS'.\
+                    format(
+                        schema_name=schema_name,
+                        table_name =table_name
+                    ))
+
+    def test_table_headers(
+            self,
+            table_name,
+            schema_name,
+            defined_headers,
+            debug=False,
+            logger=None
+
+    ):
+        '''test if headers are correctly covered by cfg'''
+
+        header_query = ''
+        header_result = False #TODO: remove?
+        if self.table_type == TableType.MySQL:
+            header_query = \
+            '''SELECT `COLUMN_NAME`
+                FROM `INFORMATION_SCHEMA`.`COLUMNS`
+                WHERE `TABLE_SCHEMA`=\'{schema_name}\'
+                AND `TABLE_NAME`=\'{table_name}\''''.\
+                format(
+                    schema_name=schema_name,
+                    table_name =table_name
+                )
+        else:
+            raise UnsupportedTableType(
+                'unsupported table type: ' + str(self.table_type),
+                table_name
+            )
+
+        try:
+            headers = self._direct_query(header_query)
+        except Exception as error_msg:
+            #TODO logger
+            raise error_msg
+        #TODO mysql specific? vvv
+        headers = table_utils.mysql_cleanup_results(headers)
+
+        if debug:
+            print(headers)
+        if not table_utils.bool_test_headers(
+                headers,
+                defined_headers,
+                debug=debug,
+                #logger=Logger #TODO
+        ):
+            error_msg = 'Table headers not equivalent'
+            print(error_msg)
+            raise MismatchedHeaders(
+                error_msg,
+                table_name)
+
+
+    @abc.abstractmethod
+    def get_table_create_string(self):
+        '''get/parse table-create file'''
+        pass
 
     def __del__(self):
         '''release connection/cursor'''
@@ -179,4 +290,8 @@ class TableKeysMissing(ConnectionException):
 
 class UnsupportedTableType(ConnectionException):
     '''unable to execute command, not supported'''
+    pass
+
+class MismatchedHeaders(ConnectionException):
+    '''defined headers and table headers do not line up'''
     pass
