@@ -65,11 +65,11 @@ def bool_test_headers(
         error_msg = 'Table Headers not equivalent:{a_group}{b_group}{orphan_group}'.\
             format(
                 a_group=' unique existing_headers: (' + ','.join(a_list) + ')'\
-                    if a_list else None,
+                    if a_list else '',
                 b_group=' unique defined_headers: (' + ','.join(b_list) + ')'\
-                    if b_list else None,
+                    if b_list else '',
                 orphan_group=' orphan elements: (' + ','.join(orphan_list) + ')'\
-                    if orphan_list else None
+                    if orphan_list else ''
             )
 
         if logger:
@@ -82,26 +82,13 @@ def bool_test_headers(
 
     return return_bool
 
-def mysql_table_exists(
-        #schema_name,
-        table_name,
-        #db_connection,
-        db_cursor,
-        debug=False,
-        logger=None
-):
-    '''test mysql to see if table exists'''
-    exists_query = \
-    '''SHOW TABLES LIKE \'{table_name}\''''.\
-        format(
-            table_name=table_name
-        )
+def mysql_cleanup_results(result_to_listify):
+    '''cleans up .fetchall() behavior and makes the result listified'''
+    ##NOTE: REWRITE##
 
-    if debug:
-        print('----exists_query: ' + exists_query)
-    if logger:
-        logger.debug('----exists_query: ' + exists_query)
+    result_list = []
+    for row in result_to_listify:
+        #FIXME: for-each feels hacky
+        result_list.append(row[0])
 
-    db_cursor.execute(exists_query)
-    exists_result = db_cursor.fetchall()
-
+    return result_list

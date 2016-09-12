@@ -30,9 +30,9 @@ class snapshot_evecentral(Connection.SQLTable):
         tmp_data_keys = []
         print('--SNAPSHOT: get_keys()')
         try:
-            tmp_primary_keys = ','.split(config.get(ME, 'primary_keys'))
-            tmp_data_keys = ','.split(config.get(ME, 'data_keys'))
-            self.index_key = config.get(ME, 'index_key') #TODO: this is bad
+            tmp_primary_keys = config.get(ME, 'primary_keys').split(',')
+            tmp_data_keys = config.get(ME, 'data_keys').split(',')
+            self.index_key = config.get(ME, 'index_key') #FIXME: this is bad
         except KeyError as error_msg:
             raise Connection.TableKeysMissing(
                 error_msg,
@@ -79,7 +79,7 @@ class snapshot_evecentral(Connection.SQLTable):
             #TODO: move to mysql_create_table(schema_name, table_name, table_path, con, cur)
             if DEBUG:
                 print(
-                    'TABLE {schema_name}.{table_name} NOT FOUND, creating table'.\
+                    '---- TABLE {schema_name}.{table_name} NOT FOUND, creating table'.\
                     format(
                         schema_name=CONNECTION_VALUES['schema'],
                         table_name =CONNECTION_VALUES['table']
@@ -90,11 +90,15 @@ class snapshot_evecentral(Connection.SQLTable):
             )
             if DEBUG:
                 print(
-                    'TABLE {schema_name')
+                    '---- {schema_name}.{table_name} CREATED'.\
+                    format(
+                        schema_name=CONNECTION_VALUES['schema'],
+                        table_name =CONNECTION_VALUES['table']
+                    ))
         else:
             if DEBUG:
                 print(
-                    'TABLE {schema_name}.{table_name} CREATED'.\
+                    '---- TABLE {schema_name}.{table_name} EXISTS'.\
                     format(
                         schema_name=CONNECTION_VALUES['schema'],
                         table_name =CONNECTION_VALUES['table']
@@ -103,8 +107,10 @@ class snapshot_evecentral(Connection.SQLTable):
         if DEBUG: print('----table_headers: start')
         all_keys = []
         all_keys.append(self.index_key)
-        all_keys.append(self.primary_keys)
-        all_keys.append(self.data_keys)
+        all_keys.extend(self.primary_keys)
+        all_keys.extend(self.data_keys)
+
+        if DEBUG: print(all_keys)
 
         #TODO: move to mysql_get_headers(schema_name, table_name, con, cur)
         header_query = \
@@ -116,8 +122,9 @@ class snapshot_evecentral(Connection.SQLTable):
                 schema_name=CONNECTION_VALUES['schema'],
                 table_name =CONNECTION_VALUES['table']
             )
-        self.cursor.execute(header_query)
-        headers = self.cursor.fetchall()
+        headers = self._direct_query(header_query)
+        headers = table_utils.mysql_cleanup_results(headers)
+
         if DEBUG:
             print(headers)
         if not table_utils.bool_test_headers(
@@ -146,5 +153,5 @@ if __name__ == '__main__':
     TEST_OBJECT = snapshot_evecentral(
         CONNECTION_VALUES['table']
     )
-    TEST_QUERY = TEST_OBJECT._direct_query('SELECT * FROM snapshot_evecentral')
+    #TEST_QUERY = TEST_OBJECT._direct_query('SELECT * FROM snapshot_evecentral')
 

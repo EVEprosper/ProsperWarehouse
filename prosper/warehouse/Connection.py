@@ -31,9 +31,10 @@ class Database(metaclass=abc.ABCMeta):
         self.table_name = ''
         print('--DATABASE: made con/cur')
 
+        self.index_key = None
         self.primary_keys, self.data_keys = self.get_keys()
         print('--DATABASE: got keys from config')
-        self.index_key = None
+
 
         self.table_type = self._define_table_type()
         try:
@@ -147,7 +148,8 @@ class SQLTable(Database):
         '''release connection/cursor'''
         #__del__ needs to be in lowest-child to execute:
         #http://www.electricmonk.nl/log/2008/07/07/python-destructor-and-garbage-collection-notes/
-        self._cursor.close()
+        #FIXME vvv need to close cursor?
+        #self._cursor.close()
         self._connection.close()
 
     #TODO: write helper methods for handling timeseries data
