@@ -249,7 +249,6 @@ class SQLTable(Database):
                 error_msg,
                 table_name)
 
-
     @abc.abstractmethod
     def get_table_create_string(self):
         '''get/parse table-create file'''

@@ -61,6 +61,7 @@ class snapshot_evecentral(Connection.SQLTable):
             )
 
         return tmp_primary_keys, tmp_data_keys
+
     def _set_info(self):
         '''save info about table/datasource'''
         #TODO move up?
