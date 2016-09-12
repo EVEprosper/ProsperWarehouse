@@ -88,10 +88,13 @@ class snapshot_evecentral(Connection.SQLTable):
                 config.get(ME, 'table_create_file'),
                 HERE
             )
+            if DEBUG:
+                print(
+                    'TABLE {schema_name')
         else:
             if DEBUG:
                 print(
-                    'TABLE {schema_name}.{table_name} EXISTS'.\
+                    'TABLE {schema_name}.{table_name} CREATED'.\
                     format(
                         schema_name=CONNECTION_VALUES['schema'],
                         table_name =CONNECTION_VALUES['table']

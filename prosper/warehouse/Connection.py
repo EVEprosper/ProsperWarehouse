@@ -119,7 +119,29 @@ class SQLTable(Database):
 
     def _create_table(self, table_create_path, local_path=None):
         '''handles executing table-create query'''
-        pass
+        full_table_filepath = None
+        if '..' in table_create_path:
+            local.cwd.chdir(local_path)
+            full_table_filepath = local.path(table_create_path)
+        else:
+            full_table_filepath = local.path(table_create_path)
+
+        #TODO: test `exists`
+        full_create_string = ''
+        with open(full_table_filepath, 'r') as file_handle:
+            full_create_string = file_handle.read()
+
+        command_list = full_create_string.split(';')
+        for command in command_list:
+            if command.startswith('--') or \
+               command == '\n':
+                #don't execute comments or blank lines
+                #FIXME hacky as fuck
+                continue
+
+            self._cursor.execute(command)
+            self._connection.commit()
+
 
     def __del__(self):
         '''release connection/cursor'''

@@ -10,8 +10,7 @@ CREATE TABLE `snapshot_evecentral` (
     `sell_min`          FLOAT(14,2) NULL,
     `sell_avg`          FLOAT(14,2) NULL,
     `sell_volume`       BIGINT(12)  NULL,
-    PRIMARY KEY (pprice_datetime,typeid,locationid))
+    PRIMARY KEY (price_datetime, typeid, locationid))
 ENGINE=InnoDB DEFAULT CHARSET=latin1;
 CREATE INDEX idx_typeid ON snapshot_evecentral(typeid);
 CREATE INDEX idx_locationid ON snapshot_evecentral(locationid);
--- CREATE INDEX idx_date ON DATE(snapshot_evecentral(price_date));
