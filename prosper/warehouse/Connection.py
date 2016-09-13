@@ -5,6 +5,7 @@ import importlib.util
 #import configparser
 
 from plumbum import local
+import pandas
 
 import prosper.warehouse.Utilities as table_utils #TODO, required?
 #from prosper.common.utilities import get_config
