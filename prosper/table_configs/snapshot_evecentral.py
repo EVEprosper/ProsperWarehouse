@@ -118,8 +118,85 @@ class snapshot_evecentral(Connection.SQLTable):
 
     #TODO: maybe too complicated
 
-    def get_data(self, *args, **kwargs):
-        pass
+    def get_data(
+            self,
+            datetime_start,
+            datetime_end=None,
+            limit=None,
+            *args, **kwargs
+    ):
+        '''process queries to fetch data'''
+        #**kwargs: filter query keys
+        #*args: data keys to return
+        if isinstance(datetime_start, int):
+            #assume "last x days"
+            datetime_start = table_utils.convert_days_to_datetime(datetime_start)
+
+        ## Test argument contents before executing ##
+        try:
+            table_utils.test_kwargs_headers(self.primary_keys, kwargs)
+        except Exception as error_msg:
+            raise Connection.InvalidQueryKeys(
+                error_msg,
+                self.table_name
+                )
+        try:
+            table_utils.test_args_headers(self.data_keys, args)
+        except Exception as error_msg:
+            raise Connection.InvalidDataKeys(
+                error_msg,
+                self.table_name
+                )
+        if not isinstance(limit, int) or \
+               isinstance(limit, None):
+            raise Connection.BadQueryModifier(
+                'limit badType: ' + str(type(limit)),
+                self.table_name
+                )
+        elif isinstance(limit, int):
+            #tryhard/overkill
+            limit = abs(limit)
+        #TODO: test datetimes
+
+        ## Let's Build A Query! ##
+        query_header_string = ','.join(args) if args else ','.join(self.data_keys)
+        max_date_filter = ''
+        if datetime_end:
+            max_date_filter = 'AND {index_key} < \'{datetime_string}\''.\
+                format(
+                    index_key=self.index_key,
+                    datetime_string=str(datetime_end)
+                )
+        limit_filter = ''
+        if limit:
+            limit_filter = 'AND LIMIT {limit}'.format(limit=limit)
+
+        query_general_filter = \
+            '''{index_key} > \'{datetime_string}\''
+            {max_date_filter}'''.\
+            format(
+                index_key=self.index_key,
+                datetime_string=str(datetime_start),
+                max_date_filter=max_date_filter
+                )
+        query_specific_filter = table_utils.format_kwargs(kwargs)
+        query_string = \
+        '''SELECT {query_header_string}
+            FROM {table_name}
+            WHERE {query_general_filter}
+            {query_specific_filter}
+            ORDER BY {index_key} DESC
+            {limit_filter}'''.\
+            format(
+                query_header_string=query_header_string,
+                table_name=self.table_name,
+                query_general_filter=query_general_filter,
+                query_specific_filter=query_specific_filter,
+                index_key=self.index_key,
+                limit_filter=limit_filter
+            )
+
+
 
     def put_data(self, payload):
         pass

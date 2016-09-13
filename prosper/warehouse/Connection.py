@@ -74,7 +74,7 @@ class Database(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def get_data(self, *args, **kwargs):
+    def get_data(self, datetime_start, datetime_end=None, limit=None, *args, **kwargs ):
         '''process queries to fetch data'''
         #**kwargs: filter query keys
         #*args: data keys to return
@@ -295,3 +295,12 @@ class UnsupportedTableType(ConnectionException):
 class MismatchedHeaders(ConnectionException):
     '''defined headers and table headers do not line up'''
     pass
+
+class InvalidQueryKeys(ConnectionException):
+    '''tried to pivot table on unsupported keys'''
+    pass
+
+class InvalidDataKeys(ConnectionException):
+    '''tried to filter table on unsupported keys'''
+    pass
+
