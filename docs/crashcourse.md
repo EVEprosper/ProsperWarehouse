@@ -40,13 +40,13 @@ REQUIRED methods:
     * `self.test_table_exists` has logic for checking for `schema.table_name`.  Can create table if DNE
     * `self.test_table_headers` has logic to compare str() keys from config against table in DB
 * get_data():
-    * has query logic from *args/**kwargs TODO
+    * has query logic from `*args`/`**kwargs` TODO
     * returns pandas dataframe (using `pandas.read_sql`)
 * put_data():
     * takes pandas dataframe
     * validates headers TODO
     * pushes dataframe into database (using `pandas.write_sql`)
 
-Debug __main__
+Debug `__main__`
 * main has been reserved for running config directly.  Try to instantiate object and execute basic query for TEST
 
