@@ -20,3 +20,33 @@ table_configs also holds all private connection info in one place.  Using table_
 
 # Using ProsperWarehouse
 TODO
+## Building new table_configs
+### SQL-sources
+Required dependencies:
+* config parser (prosper.common.utilities.get_config)
+* HERE/ME/CONFIG abspathing
+* DEBUG/main -- optional but useful
+
+TODO - cleanup?: helper methods:
+* set_local_path: return HERE
+* _define_table_type (prosper.warehouse.connection.TableType enum)
+* get_table_create_string (parses SQL table config, returns str())
+* get_keys: reads `primary_keys`, `data_keys`, and `index_key` from config
+* _set_info: returns `table_name` and `db_schema` from config
+
+REQUIRED methods:
+* get_connection: returns `connection` and `cursor` objects for the class to use
+* test_table: tests table integrity and connections to table
+    * `self.test_table_exists` has logic for checking for `schema.table_name`.  Can create table if DNE
+    * `self.test_table_headers` has logic to compare str() keys from config against table in DB
+* get_data():
+    * has query logic from *args/**kwargs TODO
+    * returns pandas dataframe (using `pandas.read_sql`)
+* put_data():
+    * takes pandas dataframe
+    * validates headers TODO
+    * pushes dataframe into database (using `pandas.write_sql`)
+
+Debug __main__
+* main has been reserved for running config directly.  Try to instantiate object and execute basic query for TEST
+
