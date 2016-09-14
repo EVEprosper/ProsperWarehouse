@@ -121,9 +121,10 @@ class snapshot_evecentral(Connection.SQLTable):
     def get_data(
             self,
             datetime_start,
+            *args,
             datetime_end=None,
             limit=None,
-            *args, **kwargs
+            **kwargs
     ):
         '''process queries to fetch data'''
         #**kwargs: filter query keys
@@ -147,15 +148,13 @@ class snapshot_evecentral(Connection.SQLTable):
                 error_msg,
                 self.table_name
                 )
-        if not isinstance(limit, int) or \
-               isinstance(limit, None):
+        if isinstance(limit, int):
+            limit = abs(limit)
+        elif limit is not None: #<--FIXME: logic is kinda shitty
             raise Connection.BadQueryModifier(
                 'limit badType: ' + str(type(limit)),
                 self.table_name
                 )
-        elif isinstance(limit, int):
-            #tryhard/overkill
-            limit = abs(limit)
         #TODO: test datetimes
 
         ## Let's Build A Query! ##
@@ -172,7 +171,7 @@ class snapshot_evecentral(Connection.SQLTable):
             limit_filter = 'AND LIMIT {limit}'.format(limit=limit)
 
         query_general_filter = \
-            '''{index_key} > \'{datetime_string}\''
+            '''{index_key} > \'{datetime_string}\'
             {max_date_filter}'''.\
             format(
                 index_key=self.index_key,
@@ -180,8 +179,8 @@ class snapshot_evecentral(Connection.SQLTable):
                 max_date_filter=max_date_filter
                 )
         query_specific_filter = table_utils.format_kwargs(kwargs)
-        query_string = \
-        '''SELECT {query_header_string}
+        query_string = '''
+            SELECT {index_key},{query_header_string}
             FROM {table_name}
             WHERE {query_general_filter}
             {query_specific_filter}
@@ -195,8 +194,13 @@ class snapshot_evecentral(Connection.SQLTable):
                 index_key=self.index_key,
                 limit_filter=limit_filter
             )
-
-
+        if DEBUG: print(query_string)
+        #exit()
+        pandas_dataframe = pandas.read_sql(
+            query_string,
+            self._connection
+            )
+        return pandas_dataframe
 
     def put_data(self, payload):
         pass
@@ -208,7 +212,14 @@ if __name__ == '__main__':
     CONNECTION_VALUES = table_utils.get_config_values(config, ME, DEBUG)
     print(CONNECTION_VALUES)
     TEST_OBJECT = snapshot_evecentral(
-        CONNECTION_VALUES['table']
+        CONNECTION_VALUES['table'],
     )
+    TEST_DATA = TEST_OBJECT.get_data(
+        10,
+        "sell_min",
+        "sell_volume",
+        locationid=99999999,#30000142,
+        typeid=34,
+    )
+    print(TEST_DATA)
     #TEST_QUERY = TEST_OBJECT._direct_query('SELECT * FROM snapshot_evecentral')
-

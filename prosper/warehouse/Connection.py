@@ -30,7 +30,7 @@ class Database(metaclass=abc.ABCMeta):
     def __init__(self, datasource_name):
         '''basic info about all databases'''
         self.datasource_name = datasource_name
-        self.table_name = ''
+
         self.local_path = self.set_local_path()
         print('--DATABASE: made con/cur')
 
@@ -304,3 +304,6 @@ class InvalidDataKeys(ConnectionException):
     '''tried to filter table on unsupported keys'''
     pass
 
+class BadQueryModifier(ConnectionException):
+    '''not a supported modifier type or isinstance() exception'''
+    pass

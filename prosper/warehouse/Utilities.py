@@ -1,5 +1,7 @@
 '''Utilities.py: working functions for parsing database stuff'''
 
+import datetime
+
 ## TODO: UTILTIES ##
 def bool_can_write(DatabaseClass):
     '''return permissions if writing to db is allowed'''
@@ -92,3 +94,46 @@ def mysql_cleanup_results(result_to_listify):
         result_list.append(row[0])
 
     return result_list
+
+def convert_days_to_datetime(days):
+    '''may want to work with "x-days" instead of datetime'''
+    datetime_now = datetime.datetime.today()
+    datetime_target = datetime_now - datetime.timedelta(days=(days+1))
+    datetime_str = datetime_target.strftime('%Y-%m-%d %H:%M:%S')
+    return datetime_str
+
+def test_kwargs_headers(primary_keys, kwargs):
+    '''parse kwargs and validate against given keys'''
+    kwargs_list = list(kwargs.keys())
+    #print(set(primary_keys) - set(kwargs))
+    if len(set(kwargs_list) - set(primary_keys)):
+        mismatch_keys = set(kwargs_list) - set(primary_keys)
+        raise TypeError('Invalid args: ' + ','.join(mismatch_keys))
+    else:
+        return True
+
+def test_args_headers(data_keys, args):
+    '''test if args all exist as data_keys (and no extras)'''
+    if len(set(args) - set(data_keys)):
+        mismatch_keys = set(args) - set(data_keys)
+        raise TypeError('Invalid args: ' + ','.join(mismatch_keys))
+    else:
+        return True
+
+def format_kwargs(kwargs, table_type=None):
+    '''parse key:values to build up filter keys'''
+    #TODO: change query magic on table_type
+    #FIXME: this seems stupid vvv
+    query_list = []
+    for key, value in kwargs.items():
+        value_str = '\'{0}\''.format(value) if isinstance(value, str) \
+            else '{0}'.format(value)
+        partial_str = '{key}={value} '.\
+            format(
+                key=key,
+                value=value_str
+            )
+        query_list.append(partial_str)
+    query_str = 'AND ({0})'.format('AND '.join(query_list))
+    print(query_str)
+    return query_str
