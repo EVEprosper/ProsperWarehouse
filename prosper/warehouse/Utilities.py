@@ -11,7 +11,7 @@ def bool_can_write(DatabaseClass):
 def get_config_values(config_object, key_name, debug=False):
     '''parses standardized config object and returns vals, or defaults'''
     if debug:
-        print('Parsing config for: {key_name}'.format(key_name=key_name))
+        print('----get_config_values: Parsing config for: {key_name}'.format(key_name=key_name))
     connection_values = {}
     connection_values['schema'] = config_object.get(key_name, 'db_schema')
     connection_values['host']   = config_object.get(key_name, 'db_host')
@@ -79,6 +79,8 @@ def bool_test_headers(
 
         if debug:
             print(error_msg)
+
+        return error_msg
     else:
         return_bool = True
 

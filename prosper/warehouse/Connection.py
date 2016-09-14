@@ -36,6 +36,10 @@ class Database(metaclass=abc.ABCMeta):
 
         self.index_key = None
         self.primary_keys, self.data_keys = self.get_keys()
+        self.all_keys=[]
+        self.all_keys.append(self.index_key)
+        self.all_keys.extend(self.primary_keys)
+        self.all_keys.extend(self.data_keys)
         print('--DATABASE: got keys from config')
 
 
@@ -238,6 +242,7 @@ class SQLTable(Database):
 
         if debug:
             print(headers)
+        #FIXME vvv bool_test_headers return values are weird
         if not table_utils.bool_test_headers(
                 headers,
                 defined_headers,
@@ -306,4 +311,8 @@ class InvalidDataKeys(ConnectionException):
 
 class BadQueryModifier(ConnectionException):
     '''not a supported modifier type or isinstance() exception'''
+    pass
+
+class UnableToWriteToDatastore(ConnectionException):
+    '''issues writing to store'''
     pass

@@ -3,7 +3,7 @@ CREATE TABLE `snapshot_evecentral` (
     `price_datetime`    DATETIME    NOT NULL,
     `typeid`            INT(8)      NOT NULL,
     `locationid`        INT(8)      NOT NULL,
-    `location_type`     ENUM('solarsystemid','stationid','regionid','global') NULL,
+    `location_type`     ENUM('solarsystemid','stationid','regionid','global','citadelid','test') NULL,
     `buy_max`           FLOAT(14,2) NULL,
     `buy_avg`           FLOAT(14,2) NULL,
     `buy_volume`        BIGINT(12)  NULL,

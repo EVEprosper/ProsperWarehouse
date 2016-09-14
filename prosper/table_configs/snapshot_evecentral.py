@@ -99,16 +99,12 @@ class snapshot_evecentral(Connection.SQLTable):
 
         ## Check if headers config is correct ##
         if DEBUG: print('----table_headers: start')
-        all_keys = []
-        all_keys.append(self.index_key)
-        all_keys.extend(self.primary_keys)
-        all_keys.extend(self.data_keys)
 
         try:
             self.test_table_headers(
                 CONNECTION_VALUES['table'],
                 CONNECTION_VALUES['schema'],
-                all_keys,
+                self.all_keys,
                 DEBUG
             )
         except Exception as error_msg:
@@ -203,16 +199,120 @@ class snapshot_evecentral(Connection.SQLTable):
         return pandas_dataframe
 
     def put_data(self, payload):
-        pass
+        '''tests and pushes data to datastore'''
+        if not isinstance(payload, pandas.DataFrame):
+            raise NotImplementedError('put_data() requires Pandas.DataFrame.  No conversion implemented')
+
+        test_result = table_utils.bool_test_headers(
+            list(payload.columns.values),
+            self.all_keys,
+            None,
+            DEBUG
+        )
+
+        #FIXME: test to see if index NEEDS to change (rather than forcing)
+        if not payload.index.name:
+            payload.set_index(
+                keys=self.index_key,
+                drop=True,
+                inplace=True
+            )
+
+        #FIXME vvv return types are weird without ConnectionExceptions being passed down
+        if isinstance(test_result, str):
+            raise Connection.MismatchedHeaders(test_result, self.table_name)
+
+        try:
+            payload.to_sql(
+                name=self.table_name,
+                con=self._connection,
+                schema=self.schema_name,
+                flavor='mysql',
+                if_exists='append'
+            )
+        except Exception as error_msg:
+            raise Connection.UnableToWriteToDatastore(
+                error_msg,
+                self.table_name
+            )
+
+
+def build_smaple_dataframe(days, frequency):
+    '''load a sample dataframe for testing'''
+    #TODO make generic?
+    from datetime import datetime, timedelta
+    from numpy import random
+
+    datetime_today = datetime.today()
+    datetime_target= datetime_today - timedelta(days=(days+1))
+    datetime_range = pandas.date_range(
+        start=datetime_target,
+        end=datetime_today,
+        freq='{0}H'.format(int(24/frequency))
+    )
+
+    sizeof_list = len(datetime_range)
+    typeids = [34] * sizeof_list
+    locationids = [99999999] * sizeof_list
+    locationtypes=['test'] * sizeof_list
+    buymaxs = random.randint(
+        low=400,
+        high=600,
+        size=sizeof_list
+        ) / 100
+    buyavgs = random.randint(
+        low=400,
+        high=600,
+        size=sizeof_list
+        ) / 100
+    buyvols = random.randint(
+        low=1000000,
+        high=1000000000,
+        size=sizeof_list)
+    sellmins = random.randint(
+        low=600,
+        high=800,
+        size=sizeof_list
+        ) / 100
+    sellavgs = random.randint(
+        low=600,
+        high=800,
+        size=sizeof_list
+        ) / 100
+    sellvols = random.randint(
+        low=1000000,
+        high=1000000000,
+        size=sizeof_list)
+    dataframe = pandas.DataFrame({
+        'price_datetime':datetime_range,
+        'typeid':typeids,
+        'locationid':locationids,
+        'location_type':locationtypes,
+        'buy_max':buymaxs,
+        'buy_avg':buyavgs,
+        'buy_volume':buyvols,
+        'sell_min':sellmins,
+        'sell_avg':sellavgs,
+        'sell_volume':sellvols
+        })
+    dataframe.set_index(
+        keys='price_datetime',
+        drop=True,
+        inplace=True
+    )
+    print(dataframe)
+    return dataframe
 
 ## MAIN = TEST ##
 if __name__ == '__main__':
     print(ME)
     DEBUG = True
     CONNECTION_VALUES = table_utils.get_config_values(config, ME, DEBUG)
+    SAMPLE_DATA_FRAME = build_smaple_dataframe(10, 24)
     TEST_OBJECT = snapshot_evecentral(
         CONNECTION_VALUES['table'],
     )
+    TEST_OBJECT.put_data(SAMPLE_DATA_FRAME)
     TEST_DATA = TEST_OBJECT.get_data(
         10,
         "sell_min",
@@ -221,4 +321,4 @@ if __name__ == '__main__':
         typeid=34,
     )
     print(TEST_DATA)
-    #TEST_QUERY = TEST_OBJECT._direct_query('SELECT * FROM snapshot_evecentral')
+    #TODO compare TEST_DATA and SAMPLE_DATA_FRAME
