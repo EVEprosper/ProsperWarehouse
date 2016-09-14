@@ -176,7 +176,7 @@ class crest_markethistory(Connection.SQLTable):
                 )
         query_specific_filter = table_utils.format_kwargs(kwargs)
         query_string = '''
-            SELECT {index_key},{query_header_string}
+            SELECT DATE({index_key}),{query_header_string}
             FROM {table_name}
             WHERE {query_general_filter}
             {query_specific_filter}
@@ -242,17 +242,20 @@ def build_smaple_dataframe(days):
     #TODO make generic?
     from datetime import datetime, timedelta
     from numpy import random
+    from pandas import datetime as dt
 
     datetime_today = datetime.today()
     datetime_target= datetime_today - timedelta(days=(days+1))
     datetime_range = pandas.date_range(
         start=datetime_target,
         end=datetime_today,
-        freq='1D'
+        freq='1D',
+        format='%Y-%m-%d'
     )
-    datetime_range = datetime_range.dt.date
+    #datetime_range = datetime_range.date
+    #print(datetime_range)
     sizeof_list = len(datetime_range)
-    typeids = [99999999] * sizeof_list
+    typeids = [34] * sizeof_list
     regionids = [99999999] * sizeof_list
 
     orders = random.randint(
@@ -283,7 +286,7 @@ def build_smaple_dataframe(days):
         ) / 100
 
     dataframe = pandas.DataFrame({
-        'price_date': datetime_range,
+        'price_date': datetime_range,#.date,
         'typeid': typeids,
         'regionid': regionids,
         'orderCount': orders,
@@ -292,48 +295,9 @@ def build_smaple_dataframe(days):
         'highPrice': pricehighs,
         'avgPrice': priceavgs
         })
-   # #buymaxs = random.randint(
-    #    low=400,
-    #    high=600,
-    #    size=sizeof_list
-    #    ) / 100
-    #buyavgs = random.randint(
-    #    low=400,
-    #    high=600,
-    #    size=sizeof_list
-    #    ) / 100
-    #buyvols = random.randint(
-    #    low=1000000,
-    #    high=1000000000,
-    #    size=sizeof_list)
-    #sellmins = random.randint(
-    #    low=600,
-    #    high=800,
-    #    size=sizeof_list
-    #    ) / 100
-    #sellavgs = random.randint(
-    #    low=600,
-    #    high=800,
-    #    size=sizeof_list
-    #    ) / 100
-    #sellvols = random.randint(
-    #    low=1000000,
-    #    high=1000000000,
-    #    size=sizeof_list)
-    #dataframe = pandas.DataFrame({
-    #    'price_datetime':datetime_range,
-    #    'typeid':typeids,
-    #    'locationid':locationids,
-    #    'location_type':locationtypes,
-    #    'buy_max':buymaxs,
-    #    'buy_avg':buyavgs,
-    #    'buy_volume':buyvols,
-    #    'sell_min':sellmins,
-    #    'sell_avg':sellavgs,
-    #    'sell_volume':sellvols
-    #    })
+
     dataframe.set_index(
-        keys='price_datetime',
+        keys='price_date',
         drop=True,
         inplace=True
     )
@@ -352,9 +316,9 @@ if __name__ == '__main__':
     TEST_OBJECT.put_data(SAMPLE_DATA_FRAME)
     TEST_DATA = TEST_OBJECT.get_data(
         10,
-        "sell_min",
-        "sell_volume",
-        locationid=99999999,#30000142,
+        "avgPrice",
+        "volume",
+        regionid=99999999,#30000142,
         typeid=34,
     )
     print(TEST_DATA)

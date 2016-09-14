@@ -1,6 +1,6 @@
 DROP TABLE IF EXISTS `crest_markethistory`;
 CREATE TABLE `crest_markethistory` (
-    `price_date`    DATE        NOT NULL,
+    `price_date`    DATETIME    NOT NULL,
     `typeid`        INT(8)      NOT NULL,
     `regionid`      INT(8)      NOT NULL,
     `orderCount`        INT(8)      NULL,
@@ -11,5 +11,5 @@ CREATE TABLE `crest_markethistory` (
     PRIMARY KEY (price_date, typeid, regionid))
 ENGINE=InnoDB DEFAULT CHARSET=latin1;
 CREATE INDEX price_dates ON crest_markethistory(price_date);
-CREATE INDEX itemids     ON crest_markethistory(itemid);
+CREATE INDEX typeids     ON crest_markethistory(typeid);
 CREATE INDEX regionids   ON crest_markethistory(regionid);
