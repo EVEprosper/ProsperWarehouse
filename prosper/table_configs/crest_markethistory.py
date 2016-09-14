@@ -345,7 +345,7 @@ if __name__ == '__main__':
     print(ME)
     DEBUG = True
     CONNECTION_VALUES = table_utils.get_config_values(config, ME, DEBUG)
-    SAMPLE_DATA_FRAME = build_smaple_dataframe(2, 12)
+    SAMPLE_DATA_FRAME = build_smaple_dataframe(10)
     TEST_OBJECT = crest_markethistory(
         CONNECTION_VALUES['table'],
     )
