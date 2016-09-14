@@ -135,5 +135,4 @@ def format_kwargs(kwargs, table_type=None):
             )
         query_list.append(partial_str)
     query_str = 'AND ({0})'.format('AND '.join(query_list))
-    print(query_str)
     return query_str
