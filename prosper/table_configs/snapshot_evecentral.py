@@ -210,7 +210,6 @@ if __name__ == '__main__':
     print(ME)
     DEBUG = True
     CONNECTION_VALUES = table_utils.get_config_values(config, ME, DEBUG)
-    print(CONNECTION_VALUES)
     TEST_OBJECT = snapshot_evecentral(
         CONNECTION_VALUES['table'],
     )
