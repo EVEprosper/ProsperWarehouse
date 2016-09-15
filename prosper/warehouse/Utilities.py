@@ -126,6 +126,8 @@ def format_kwargs(kwargs, table_type=None):
     '''parse key:values to build up filter keys'''
     #TODO: change query magic on table_type
     #FIXME: this seems stupid vvv
+    if not kwargs:
+        return ''
     query_list = []
     for key, value in kwargs.items():
         value_str = '\'{0}\''.format(value) if isinstance(value, str) \

@@ -78,7 +78,12 @@ class Database(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def get_data(self, datetime_start, datetime_end=None, limit=None, *args, **kwargs ):
+    def get_data(
+            self,
+            datetime_start,
+            datetime_end=None, limit=None, kwargs_passthrough=None,
+            *args, **kwargs
+    ):
         '''process queries to fetch data'''
         #**kwargs: filter query keys
         #*args: data keys to return
@@ -98,6 +103,12 @@ class Database(metaclass=abc.ABCMeta):
     def _direct_query(self, query_str):
         '''some tests require direct SQL execution.  Support those calls internally ONLY'''
         pass
+
+    @abc.abstractmethod
+    def latest_entry(self, **kwargs):
+        '''get the latest instance of a filter to avoid overwrites'''
+        pass
+
 
 class SQLTable(Database):
     '''child class for handling TimeSeries databases'''

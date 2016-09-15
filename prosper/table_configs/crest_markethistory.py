@@ -1,6 +1,7 @@
 '''snapshot_evecentral.py: contains connection logic for snapshot_evecentral database'''
 
 from os import path
+from datetime import datetime, timedelta
 
 import pandas
 from plumbum import local
@@ -21,6 +22,8 @@ CONNECTION_VALUES = table_utils.get_config_values(config, ME)
 DEBUG = False
 class crest_markethistory(Connection.SQLTable):
     '''worker class for handling eve_central data'''
+    _latest_entry=None
+
     def set_local_path(self):
         return HERE
 
@@ -112,6 +115,8 @@ class crest_markethistory(Connection.SQLTable):
             raise error_msg
         if DEBUG: print('----test_table_headers: PASS')
 
+        self._latest_entry = self.latest_entry()
+
     #TODO: maybe too complicated
 
     def get_data(
@@ -120,11 +125,15 @@ class crest_markethistory(Connection.SQLTable):
             *args,
             datetime_end=None,
             limit=None,
+            kwargs_passthrough=None,
             **kwargs
     ):
         '''process queries to fetch data'''
         #**kwargs: filter query keys
         #*args: data keys to return
+        if kwargs_passthrough:
+            kwargs = kwargs_passthrough
+
         if isinstance(datetime_start, int):
             #assume "last x days"
             datetime_start = table_utils.convert_days_to_datetime(datetime_start)
@@ -164,7 +173,7 @@ class crest_markethistory(Connection.SQLTable):
                 )
         limit_filter = ''
         if limit:
-            limit_filter = 'AND LIMIT {limit}'.format(limit=limit)
+            limit_filter = 'LIMIT {limit}'.format(limit=limit)
 
         query_general_filter = \
             '''{index_key} > \'{datetime_string}\'
@@ -176,7 +185,7 @@ class crest_markethistory(Connection.SQLTable):
                 )
         query_specific_filter = table_utils.format_kwargs(kwargs)
         query_string = '''
-            SELECT DATE({index_key}),{query_header_string}
+            SELECT {index_key},{query_header_string}
             FROM {table_name}
             WHERE {query_general_filter}
             {query_specific_filter}
@@ -198,25 +207,58 @@ class crest_markethistory(Connection.SQLTable):
             )
         return pandas_dataframe
 
+    def latest_entry(self, **kwargs):
+        '''check source for latest entry (given kwargs)'''
+        pd_dataframe = self.get_data(
+            '1970-01-01',
+            kwargs_passthrough=kwargs,
+            limit=1,
+            )
+        if DEBUG: print('----latest_entry=')
+        if pd_dataframe.empty:
+            return None
+        else:
+            if DEBUG: print(pd_dataframe[self.index_key][0])
+            return pd_dataframe[self.index_key][0]
+
     def put_data(self, payload):
         '''tests and pushes data to datastore'''
         if not isinstance(payload, pandas.DataFrame):
             raise NotImplementedError('put_data() requires Pandas.DataFrame.  No conversion implemented')
 
+
+        if not payload.index.name:
+            # change pandas.index to db's index_key
+            payload.set_index(
+                keys=self.index_key,
+                drop=True,
+                inplace=True
+            )
+        if DEBUG: print('----Testing dataframe against existing table')
+        if DEBUG: print(self._latest_entry)
+        if self._latest_entry:
+            # avoid overwrites
+            datemin = self._latest_entry + timedelta(days=1)
+            datemax = payload.index.values.max()
+            print('datemin: ' + str(datemin))
+            print('datemax: ' + str(datemax))
+            if payload.index.values.max() == self._latest_entry:
+                print('WARNING: database already up-to-date, SKIPPING WRITE')
+                return
+            else:
+                if DEBUG: print('----Adjusting dataframe')
+                payload = payload.ix[
+                    datemin:\
+                    datemax
+                    ]
+
+        if DEBUG: print(payload)
         test_result = table_utils.bool_test_headers(
             list(payload.columns.values),
             self.all_keys,
             None,
             DEBUG
         )
-
-        #FIXME: test to see if index NEEDS to change (rather than forcing)
-        if not payload.index.name:
-            payload.set_index(
-                keys=self.index_key,
-                drop=True,
-                inplace=True
-            )
 
         #FIXME vvv return types are weird without ConnectionExceptions being passed down
         if isinstance(test_result, str):
@@ -240,9 +282,9 @@ class crest_markethistory(Connection.SQLTable):
 def build_smaple_dataframe(days):
     '''load a sample dataframe for testing'''
     #TODO make generic?
-    from datetime import datetime, timedelta
+    #from datetime import datetime, timedelta
     from numpy import random
-    from pandas import datetime as dt
+
 
     datetime_today = datetime.today()
     datetime_target= datetime_today - timedelta(days=(days+1))
@@ -286,7 +328,7 @@ def build_smaple_dataframe(days):
         ) / 100
 
     dataframe = pandas.DataFrame({
-        'price_date': datetime_range,#.date,
+        'price_date': datetime_range.date,
         'typeid': typeids,
         'regionid': regionids,
         'orderCount': orders,
@@ -314,6 +356,11 @@ if __name__ == '__main__':
         CONNECTION_VALUES['table'],
     )
     TEST_OBJECT.put_data(SAMPLE_DATA_FRAME)
+    TEST_OBJECT.latest_entry(
+        regionid=99999999,
+        typeid=34
+        )
+    exit()
     TEST_DATA = TEST_OBJECT.get_data(
         10,
         "avgPrice",
@@ -322,4 +369,5 @@ if __name__ == '__main__':
         typeid=34,
     )
     print(TEST_DATA)
+
     #TODO compare TEST_DATA and SAMPLE_DATA_FRAME

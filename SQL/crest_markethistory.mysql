@@ -1,9 +1,9 @@
 DROP TABLE IF EXISTS `crest_markethistory`;
 CREATE TABLE `crest_markethistory` (
-    `price_date`    DATETIME    NOT NULL,
+    `price_date`    DATE        NOT NULL,
     `typeid`        INT(8)      NOT NULL,
     `regionid`      INT(8)      NOT NULL,
-    `orderCount`        INT(8)      NULL,
+    `orderCount`    INT(8)      NULL,
     `volume`        BIGINT(12)  NULL,
     `lowPrice`      FLOAT(13,2) NULL,
     `highPrice`     FLOAT(13,2) NULL,

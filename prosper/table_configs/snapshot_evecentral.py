@@ -236,6 +236,9 @@ class snapshot_evecentral(Connection.SQLTable):
                 self.table_name
             )
 
+    def latest_entry(self, **kwargs):
+        '''not implemented'''
+        raise NotImplementedError('latest_entry() not implemented because collisions should not be issue')
 
 def build_smaple_dataframe(days, frequency):
     '''load a sample dataframe for testing'''
