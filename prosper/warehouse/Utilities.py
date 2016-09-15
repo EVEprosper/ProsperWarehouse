@@ -8,7 +8,12 @@ def bool_can_write(DatabaseClass):
     pass
 
 ## TODO: UTILTIES ##
-def get_config_values(config_object, key_name, debug=False):
+def get_config_values(
+        config_object,
+        key_name,
+        debug=False,
+        logger=None
+):
     '''parses standardized config object and returns vals, or defaults'''
     if debug:
         print('----get_config_values: Parsing config for: {key_name}'.format(key_name=key_name))
@@ -42,8 +47,8 @@ def get_config_values(config_object, key_name, debug=False):
 def bool_test_headers(
         existing_headers,
         defined_headers,
-        logger=None,
-        debug=False
+        debug=False,
+        logger=None
 ):
     '''tests if existing_headers == defined_headers'''
     return_bool = False

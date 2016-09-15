@@ -112,47 +112,6 @@ class snapshot_evecentral(Connection.SQLTable):
             raise error_msg
         if DEBUG: print('----test_table_headers: PASS')
 
-    #TODO: maybe too complicated
-
-
-    def put_data(self, payload):
-        '''tests and pushes data to datastore'''
-        if not isinstance(payload, pandas.DataFrame):
-            raise NotImplementedError('put_data() requires Pandas.DataFrame.  No conversion implemented')
-
-        test_result = table_utils.bool_test_headers(
-            list(payload.columns.values),
-            self.all_keys,
-            None,
-            DEBUG
-        )
-
-        #FIXME: test to see if index NEEDS to change (rather than forcing)
-        if not payload.index.name:
-            payload.set_index(
-                keys=self.index_key,
-                drop=True,
-                inplace=True
-            )
-
-        #FIXME vvv return types are weird without ConnectionExceptions being passed down
-        if isinstance(test_result, str):
-            raise Connection.MismatchedHeaders(test_result, self.table_name)
-
-        try:
-            payload.to_sql(
-                name=self.table_name,
-                con=self._connection,
-                schema=self.schema_name,
-                flavor='mysql',
-                if_exists='append'
-            )
-        except Exception as error_msg:
-            raise Connection.UnableToWriteToDatastore(
-                error_msg,
-                self.table_name
-            )
-
     def latest_entry(self, **kwargs):
         '''not implemented'''
         raise NotImplementedError('latest_entry() not implemented because collisions should not be issue')

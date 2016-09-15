@@ -164,33 +164,7 @@ class crest_markethistory(Connection.SQLTable):
                     datemin:\
                     datemax
                     ]
-
-        if DEBUG: print(payload)
-        test_result = table_utils.bool_test_headers(
-            list(payload.columns.values),
-            self.all_keys,
-            None,
-            DEBUG
-        )
-
-        #FIXME vvv return types are weird without ConnectionExceptions being passed down
-        if isinstance(test_result, str):
-            raise Connection.MismatchedHeaders(test_result, self.table_name)
-
-        try:
-            payload.to_sql(
-                name=self.table_name,
-                con=self._connection,
-                schema=self.schema_name,
-                flavor='mysql',
-                if_exists='append'
-            )
-        except Exception as error_msg:
-            raise Connection.UnableToWriteToDatastore(
-                error_msg,
-                self.table_name
-            )
-
+        super().put_data(payload)
 
 def build_sample_dataframe(days):
     '''load a sample dataframe for testing'''

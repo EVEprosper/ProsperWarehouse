@@ -271,7 +271,7 @@ class SQLTable(Database):
                 headers,
                 defined_headers,
                 debug=debug,
-                #logger=Logger #TODO
+                logger=logger #TODO
         ):
             error_msg = 'Table headers not equivalent'
             print(error_msg)
@@ -366,6 +366,44 @@ class SQLTable(Database):
             self._connection
             )
         return pandas_dataframe
+
+    def put_data(self, payload):
+        '''tests and pushes data to datastore'''
+        if not isinstance(payload, pandas.DataFrame):
+            raise NotImplementedError('put_data() requires Pandas.DataFrame.  No conversion implemented')
+
+        test_result = table_utils.bool_test_headers(
+            list(payload.columns.values),
+            self.all_keys,
+            self._debug,
+            self._logger
+        )
+
+        #FIXME: test to see if index NEEDS to change (rather than forcing)
+        if not payload.index.name:
+            payload.set_index(
+                keys=self.index_key,
+                drop=True,
+                inplace=True
+            )
+
+        #FIXME vvv return types are weird without ConnectionExceptions being passed down
+        if isinstance(test_result, str):
+            raise MismatchedHeaders(test_result, self.table_name)
+
+        try:
+            payload.to_sql(
+                name=self.table_name,
+                con=self._connection,
+                schema=self.schema_name,
+                flavor='mysql',
+                if_exists='append'
+            )
+        except Exception as error_msg:
+            raise UnableToWriteToDatastore(
+                error_msg,
+                self.table_name
+            )
 
     @abc.abstractmethod
     def get_table_create_string(self):
