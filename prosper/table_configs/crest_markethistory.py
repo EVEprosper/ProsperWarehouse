@@ -119,93 +119,6 @@ class crest_markethistory(Connection.SQLTable):
 
     #TODO: maybe too complicated
 
-    def get_data(
-            self,
-            datetime_start,
-            *args,
-            datetime_end=None,
-            limit=None,
-            kwargs_passthrough=None,
-            **kwargs
-    ):
-        '''process queries to fetch data'''
-        #**kwargs: filter query keys
-        #*args: data keys to return
-        if kwargs_passthrough:
-            kwargs = kwargs_passthrough
-
-        if isinstance(datetime_start, int):
-            #assume "last x days"
-            datetime_start = table_utils.convert_days_to_datetime(datetime_start)
-
-        ## Test argument contents before executing ##
-        try:
-            table_utils.test_kwargs_headers(self.primary_keys, kwargs)
-        except Exception as error_msg:
-            raise Connection.InvalidQueryKeys(
-                error_msg,
-                self.table_name
-                )
-        try:
-            table_utils.test_args_headers(self.data_keys, args)
-        except Exception as error_msg:
-            raise Connection.InvalidDataKeys(
-                error_msg,
-                self.table_name
-                )
-        if isinstance(limit, int):
-            limit = abs(limit)
-        elif limit is not None: #<--FIXME: logic is kinda shitty
-            raise Connection.BadQueryModifier(
-                'limit badType: ' + str(type(limit)),
-                self.table_name
-                )
-        #TODO: test datetimes
-
-        ## Let's Build A Query! ##
-        query_header_string = ','.join(args) if args else ','.join(self.data_keys)
-        max_date_filter = ''
-        if datetime_end:
-            max_date_filter = 'AND {index_key} < \'{datetime_string}\''.\
-                format(
-                    index_key=self.index_key,
-                    datetime_string=str(datetime_end)
-                )
-        limit_filter = ''
-        if limit:
-            limit_filter = 'LIMIT {limit}'.format(limit=limit)
-
-        query_general_filter = \
-            '''{index_key} > \'{datetime_string}\'
-            {max_date_filter}'''.\
-            format(
-                index_key=self.index_key,
-                datetime_string=str(datetime_start),
-                max_date_filter=max_date_filter
-                )
-        query_specific_filter = table_utils.format_kwargs(kwargs)
-        query_string = '''
-            SELECT {index_key},{query_header_string}
-            FROM {table_name}
-            WHERE {query_general_filter}
-            {query_specific_filter}
-            ORDER BY {index_key} DESC
-            {limit_filter}'''.\
-            format(
-                query_header_string=query_header_string,
-                table_name=self.table_name,
-                query_general_filter=query_general_filter,
-                query_specific_filter=query_specific_filter,
-                index_key=self.index_key,
-                limit_filter=limit_filter
-            )
-        if DEBUG: print(query_string)
-        #exit()
-        pandas_dataframe = pandas.read_sql(
-            query_string,
-            self._connection
-            )
-        return pandas_dataframe
 
     def latest_entry(self, **kwargs):
         '''check source for latest entry (given kwargs)'''
@@ -279,7 +192,7 @@ class crest_markethistory(Connection.SQLTable):
             )
 
 
-def build_smaple_dataframe(days):
+def build_sample_dataframe(days):
     '''load a sample dataframe for testing'''
     #TODO make generic?
     #from datetime import datetime, timedelta
@@ -351,9 +264,10 @@ if __name__ == '__main__':
     print(ME)
     DEBUG = True
     CONNECTION_VALUES = table_utils.get_config_values(config, ME, DEBUG)
-    SAMPLE_DATA_FRAME = build_smaple_dataframe(10)
+    SAMPLE_DATA_FRAME = build_sample_dataframe(10)
     TEST_OBJECT = crest_markethistory(
         CONNECTION_VALUES['table'],
+        debug=DEBUG
     )
     TEST_OBJECT.put_data(SAMPLE_DATA_FRAME)
     TEST_OBJECT.latest_entry(

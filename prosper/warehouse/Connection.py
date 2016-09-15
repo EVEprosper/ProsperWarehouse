@@ -27,10 +27,13 @@ class TableType:
 
 class Database(metaclass=abc.ABCMeta):
     '''parent class for holding database connection info'''
-    def __init__(self, datasource_name):
+    _debug = False
+    _logger = None
+    def __init__(self, datasource_name, debug=False, logger=None):
         '''basic info about all databases'''
         self.datasource_name = datasource_name
-
+        self._debug = debug
+        self._logger= logger
         self.local_path = self.set_local_path()
         print('--DATABASE: made con/cur')
 
@@ -112,11 +115,12 @@ class Database(metaclass=abc.ABCMeta):
 
 class SQLTable(Database):
     '''child class for handling TimeSeries databases'''
-    def __init__(self, datasource_name):
+
+    def __init__(self, datasource_name, debug=False, logger=None):
         '''Traditional SQL-style hook setup'''
         self._connection,self._cursor = self.get_connection()
         self.table_name, self.schema_name = self._set_info()
-        super().__init__(datasource_name)
+        super().__init__(datasource_name, debug, logger)
 
     def _direct_query(self, query_str):
         '''direct query for SQL tables'''
@@ -160,10 +164,15 @@ class SQLTable(Database):
             self,
             table_name,
             schema_name,
-            debug = False,
-            logger = None
+            debug=False,
+            logger=None
     ):
         '''basic test for table existing'''
+        if not debug:
+            debug = self._debug
+        if not logger:
+            logger= self._logger
+
         exists_query = ''
         exists_result = False #TODO: remove?
         if self.table_type == TableType.MySQL:
@@ -224,6 +233,10 @@ class SQLTable(Database):
 
     ):
         '''test if headers are correctly covered by cfg'''
+        if not debug:
+            debug = self._debug
+        if not logger:
+            logger= self._logger
 
         header_query = ''
         header_result = False #TODO: remove?
@@ -265,6 +278,94 @@ class SQLTable(Database):
             raise MismatchedHeaders(
                 error_msg,
                 table_name)
+
+    def get_data(
+            self,
+            datetime_start,
+            *args,
+            datetime_end=None,
+            limit=None,
+            kwargs_passthrough=None,
+            **kwargs
+    ):
+        '''process queries to fetch data'''
+        #**kwargs: filter query keys
+        #*args: data keys to return
+        if kwargs_passthrough:
+            kwargs = kwargs_passthrough
+
+        if isinstance(datetime_start, int):
+            #assume "last x days"
+            datetime_start = table_utils.convert_days_to_datetime(datetime_start)
+
+        ## Test argument contents before executing ##
+        try:
+            table_utils.test_kwargs_headers(self.primary_keys, kwargs)
+        except Exception as error_msg:
+            raise InvalidQueryKeys(
+                error_msg,
+                self.table_name
+                )
+        try:
+            table_utils.test_args_headers(self.data_keys, args)
+        except Exception as error_msg:
+            raise InvalidDataKeys(
+                error_msg,
+                self.table_name
+                )
+        if isinstance(limit, int):
+            limit = abs(limit)
+        elif limit is not None: #<--FIXME: logic is kinda shitty
+            raise BadQueryModifier(
+                'limit badType: ' + str(type(limit)),
+                self.table_name
+                )
+        #TODO: test datetimes
+
+        ## Let's Build A Query! ##
+        query_header_string = ','.join(args) if args else ','.join(self.data_keys)
+        max_date_filter = ''
+        if datetime_end:
+            max_date_filter = 'AND {index_key} < \'{datetime_string}\''.\
+                format(
+                    index_key=self.index_key,
+                    datetime_string=str(datetime_end)
+                )
+        limit_filter = ''
+        if limit:
+            limit_filter = 'LIMIT {limit}'.format(limit=limit)
+
+        query_general_filter = \
+            '''{index_key} > \'{datetime_string}\'
+            {max_date_filter}'''.\
+            format(
+                index_key=self.index_key,
+                datetime_string=str(datetime_start),
+                max_date_filter=max_date_filter
+                )
+        query_specific_filter = table_utils.format_kwargs(kwargs)
+        query_string = '''
+            SELECT {index_key},{query_header_string}
+            FROM {table_name}
+            WHERE {query_general_filter}
+            {query_specific_filter}
+            ORDER BY {index_key} DESC
+            {limit_filter}'''.\
+            format(
+                query_header_string=query_header_string,
+                table_name=self.table_name,
+                query_general_filter=query_general_filter,
+                query_specific_filter=query_specific_filter,
+                index_key=self.index_key,
+                limit_filter=limit_filter
+            )
+        if self._debug: print(query_string)
+        #exit()
+        pandas_dataframe = pandas.read_sql(
+            query_string,
+            self._connection
+            )
+        return pandas_dataframe
 
     @abc.abstractmethod
     def get_table_create_string(self):
