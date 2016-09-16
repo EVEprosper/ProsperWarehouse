@@ -21,22 +21,23 @@ def fetch_data_source(
         #make 1 call: snapshot_evecentral.snapshot_evecentral
         datasource_name=family_name
     #else: zkillboard.map_stats, zkillboard.item_stats...
-    debug_msg = \
-    '''fetch_data_source:
+    if debug or logger:
+        debug_msg = \
+        '''fetch_data_source:
     family_name={family_name}
     datasource_name={datasource_name}
     table_config_path={table_config_path}
     debug={debug}
     logger={logger}'''.\
-    format(
-        family_name=family_name,
-        datasource_name=datasource_name,
-        table_config_path=table_config_path,
-        debug=str(debug),
-        logger=str(logger)
-    )
-    if debug: print(debug_msg)
-    if logger: logger.debug(debug_msg)
+        format(
+            family_name=family_name,
+            datasource_name=datasource_name,
+            table_config_path=table_config_path,
+            debug=str(debug),
+            logger=str(logger)
+        )
+        if debug: print(debug_msg)
+        if logger: logger.debug(debug_msg)
 
     ## Fetch module spec ##
     debug_msg = '-- fetching module spec'
@@ -90,21 +91,22 @@ def fetch_data_source(
 
         raise LoadConnectionModuleError(error_msg)
 
-    debug_msg = \
-    '''-- SUCCESS: got connection class:
+    if debug or logger:
+        debug_msg = \
+        '''-- SUCCESS: got connection class:
     {family_name}.{datasource_name}(
         datasource_name={datasource_name},
         debug={debug}
         logger={logger})'''.\
-    format(
-        datasource_name=datasource_name,
-        debug=str(debug),
-        logger=str(logger)
-    )
-    if debug: print(debug_msg)
-    if logger: logger.debug(debug_msg)
+        format(
+            datasource_name=datasource_name,
+            debug=str(debug),
+            logger=str(logger)
+        )
+        if debug: print(debug_msg)
+        if logger: logger.debug(debug_msg)
 
-    return connection_class
+        return connection_class
 
 
 class FetchConnectionException(Exception):
