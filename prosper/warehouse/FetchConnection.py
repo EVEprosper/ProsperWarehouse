@@ -3,6 +3,8 @@
 from os import path #FIXME: plumbum
 import importlib.util
 
+## NOTE: importlib magic: http://www.blog.pythonlibrary.org/2016/05/27/python-201-an-intro-to-importlib/
+
 HERE = path.abspath(path.dirname(__file__))
 DEFAULT_TABLECONFIG_PATH = path.join(path.dirname(HERE),'table_configs')
 DEBUG = False
@@ -19,6 +21,28 @@ def fetch_data_source(
         #make 1 call: snapshot_evecentral.snapshot_evecentral
         datasource_name=family_name
     #else: zkillboard.map_stats, zkillboard.item_stats...
+    debug_msg = \
+    '''fetch_data_source:
+    family_name={family_name}
+    datasource_name={datasource_name}
+    table_config_path={table_config_path}
+    debug={debug}
+    logger={logger}'''.\
+    format(
+        family_name=family_name,
+        datasource_name=datasource_name,
+        table_config_path=table_config_path,
+        debug=str(debug),
+        logger=str(logger)
+    )
+    if debug: print(debug_msg)
+    if logger: logger.debug(debug_msg)
+
+    ## Fetch module spec ##
+    debug_msg = '-- fetching module spec'
+    if debug: print(debug_msg)
+    if logger: logger.debug(debug_msg)
+
     module_path = path.join(table_config_path, family_name + '.py')
     import_spec = importlib.util.spec_from_file_location(datasource_name, module_path)
     if import_spec is None:
@@ -33,6 +57,10 @@ def fetch_data_source(
         if logger: logger.error(error_msg)
 
         raise FindConnectionModuleError(error_msg)
+
+    debug_msg = '-- fetching module from spec'
+    if debug: print(debug_msg)
+    if logger: logger.debug(debug_msg)
 
     import_module = importlib.util.module_from_spec(import_spec)
     import_spec.loader.exec_module(import_module)
@@ -61,6 +89,20 @@ def fetch_data_source(
         if logger: logger.error(error_msg)
 
         raise LoadConnectionModuleError(error_msg)
+
+    debug_msg = \
+    '''-- SUCCESS: got connection class:
+    {family_name}.{datasource_name}(
+        datasource_name={datasource_name},
+        debug={debug}
+        logger={logger})'''.\
+    format(
+        datasource_name=datasource_name,
+        debug=str(debug),
+        logger=str(logger)
+    )
+    if debug: print(debug_msg)
+    if logger: logger.debug(debug_msg)
 
     return connection_class
 
