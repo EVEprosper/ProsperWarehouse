@@ -45,7 +45,6 @@ class Database(metaclass=abc.ABCMeta):
         self.all_keys.extend(self.data_keys)
         print('--DATABASE: got keys from config')
 
-
         self.table_type = self._define_table_type()
         try:
             self.test_table()
@@ -147,8 +146,6 @@ class SQLTable(Database):
 
     def _create_table(self, full_create_string):
         '''handles executing table-create query'''
-
-
         command_list = full_create_string.split(';')
         for command in command_list:
             if command.startswith('--') or \
@@ -417,8 +414,6 @@ class SQLTable(Database):
         #FIXME vvv need to close cursor?
         #self._cursor.close()
         self._connection.close()
-
-    #TODO: write helper methods for handling timeseries data
 
 class ConnectionException(Exception):
     '''base class for table-connection exceptions'''

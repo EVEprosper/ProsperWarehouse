@@ -139,7 +139,6 @@ class crest_markethistory(Connection.SQLTable):
         if not isinstance(payload, pandas.DataFrame):
             raise NotImplementedError('put_data() requires Pandas.DataFrame.  No conversion implemented')
 
-
         if not payload.index.name:
             # change pandas.index to db's index_key
             payload.set_index(
@@ -171,7 +170,6 @@ def build_sample_dataframe(days):
     #TODO make generic?
     #from datetime import datetime, timedelta
     from numpy import random
-
 
     datetime_today = datetime.today()
     datetime_target= datetime_today - timedelta(days=(days+1))
@@ -230,7 +228,7 @@ def build_sample_dataframe(days):
         drop=True,
         inplace=True
     )
-    print(dataframe)
+    if DEBUG: print(dataframe)
     return dataframe
 
 ## MAIN = TEST ##

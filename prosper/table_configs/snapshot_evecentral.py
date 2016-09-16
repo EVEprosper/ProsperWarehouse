@@ -179,7 +179,7 @@ def build_sample_dataframe(days, frequency):
         drop=True,
         inplace=True
     )
-    print(dataframe)
+    if DEBUG: print(dataframe)
     return dataframe
 
 ## MAIN = TEST ##
