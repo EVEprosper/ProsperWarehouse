@@ -92,8 +92,7 @@ class crest_markethistory(Connection.SQLTable):
         try:
             self.test_table_exists(
                 CONNECTION_VALUES['table'],
-                CONNECTION_VALUES['schema'],
-                DEBUG
+                CONNECTION_VALUES['schema']
             )
         except Exception as error_msg:
             #TODO logger

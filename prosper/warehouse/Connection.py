@@ -8,19 +8,20 @@ from plumbum import local
 import pandas
 
 import prosper.warehouse.Utilities as table_utils #TODO, required?
+from prosper.common.utilities import LoggerDebugger
 #from prosper.common.utilities import get_config
 class TableType:
     '''enumeration for tabletypes'''
     MySQL = 'MySQL'
-    Postgress = 'Postgress'
+    Postgres = 'Postgres'
     NOTDEFINED = 'NOTDEFINED'
 
     def set_table_type(self, string_enum):
         '''roll enum from string'''
         if string_enum.lower() == 'mysql':
             return self.MySQL
-        elif string_enum.lower() == 'postgress':
-            return self.Postgress
+        elif string_enum.lower() == 'postgres':
+            return self.Postgres
 
         else:
             return self.NOTDEFINED
@@ -29,13 +30,27 @@ class Database(metaclass=abc.ABCMeta):
     '''parent class for holding database connection info'''
     _debug = False
     _logger = None
+    _debug_service = None
     def __init__(self, datasource_name, debug=False, logger=None):
         '''basic info about all databases'''
+        self._debug_service = LoggerDebugger(debug, logger)
+        debug_str = \
+        '''Database __init__(
+        {datasource_name},
+        {debug}
+        {logger})'''.\
+            format(
+                datasource_name=datasource_name,
+                debug=str(debug),
+                logger=str(logger)
+            )
+        self._debug_service.message(debug_str, 'INFO')
+
+        self._debug_service.message('-- Global setup', 'DEBUG')
         self.datasource_name = datasource_name
         self._debug = debug
         self._logger= logger
         self.local_path = self.set_local_path()
-        print('--DATABASE: made con/cur')
 
         self.index_key = None
         self.primary_keys, self.data_keys = self.get_keys()
@@ -43,7 +58,7 @@ class Database(metaclass=abc.ABCMeta):
         self.all_keys.append(self.index_key)
         self.all_keys.extend(self.primary_keys)
         self.all_keys.extend(self.data_keys)
-        print('--DATABASE: got keys from config')
+        self._debug_service.message('--DATABASE: got keys from config', 'INFO')
 
         self.table_type = self._define_table_type()
         try:
@@ -74,10 +89,10 @@ class Database(metaclass=abc.ABCMeta):
         '''save useful info about table/datasource'''
         pass
 
-    @abc.abstractmethod
-    def get_connection(self):
-        '''get con[nection] for database handles'''
-        pass
+    #@abc.abstractmethod
+    #def get_connection(self):
+    #    '''get con[nection] for database handles'''
+    #    pass
 
     @abc.abstractmethod
     def get_data(
@@ -117,13 +132,28 @@ class SQLTable(Database):
 
     def __init__(self, datasource_name, debug=False, logger=None):
         '''Traditional SQL-style hook setup'''
+        tmp_debug_service = LoggerDebugger(debug, logger)
+        tmp_debug_service.message('SQLTable __init__()', 'INFO')
         self._connection,self._cursor = self.get_connection()
         self.table_name, self.schema_name = self._set_info()
         super().__init__(datasource_name, debug, logger)
 
+    @abc.abstractmethod
+    def get_connection(self):
+        '''get con[nection] for database handles'''
+        pass
+
+    @abc.abstractmethod
+    def get_table_create_string(self):
+        '''get/parse table-create file'''
+        pass
+
     def _direct_query(self, query_str):
         '''direct query for SQL tables'''
         #TODO: if/else check for every query seems wasteful, rework?
+        self._debug_service.message('--_direct_query', 'INFO')
+
+        #FIXME vvv do different coonections need different execute/fetch cmds?
         if self.table_type == TableType.MySQL:
             #MYSQL EXECUTE
             try:
@@ -134,9 +164,9 @@ class SQLTable(Database):
 
             return query_result
 
-        elif self.table_type == TableType.Postgress:
+        elif self.table_type == TableType.Postgres:
             #POSTGRESS EXECUTE
-            pass
+            raise NotImplementedError('Postgres not supported yet')
 
         else:
             raise UnsupportedTableType(
@@ -146,8 +176,10 @@ class SQLTable(Database):
 
     def _create_table(self, full_create_string):
         '''handles executing table-create query'''
+        self._debug_service.message('--_create_table', 'INFO')
         command_list = full_create_string.split(';')
         for command in command_list:
+            self._debug_service.message('-- `{0}`'.format(command), 'DEBUG')
             if command.startswith('--') or \
                command == '\n':
                 #don't execute comments or blank lines
@@ -161,14 +193,16 @@ class SQLTable(Database):
             self,
             table_name,
             schema_name,
-            debug=False,
-            logger=None
+            #debug=False,
+            #logger=None
     ):
         '''basic test for table existing'''
-        if not debug:
-            debug = self._debug
-        if not logger:
-            logger= self._logger
+        debug_str = '-- test_table_exists({table_name}, {schema_name})'.\
+            format(
+                table_name=table_name,
+                schema_name=schema_name
+            )
+        self._debug_service.message(debug_str, 'INFO')
 
         exists_query = ''
         exists_result = False #TODO: remove?
@@ -183,60 +217,74 @@ class SQLTable(Database):
                 'unsupported table type: ' + str(self.table_type),
                 table_name
             )
+        self._debug_service.message(exists_query, 'DEBUG')
 
         try:
             exists_result = self._direct_query(exists_query)
         except Exception as error_msg:
-            #TODO logger
+            error_str = '-- EXCEPTION query failed: ' + \
+                '{error_msg} on {table_type} with {query}'.\
+                format(
+                    error_msg=error_msg,
+                    table_type=str(self.table_type),
+                    query=exists_query
+                )
+            self._debug_service.message(error_str, 'ERROR')
             raise error_msg
 
         if len(exists_result) != 1:
-            #TODO logger
-            if debug:
-                print(
-                    '---- TABLE {schema_name}.{table_name} NOT FOUND, creating table'.\
-                    format(
-                        schema_name=schema_name,
-                        table_name =table_name
-                    ))
+            warning_str = '-- TABLE {schema_name}.{table_name} NOT FOUND, creating table'.\
+                format(
+                    schema_name=schema_name,
+                    table_name =table_name
+                )
+            self._debug_service.message(warning_str, 'WARNING')
             try:
                 self._create_table(self.get_table_create_string())
             except Exception as error_msg:
+                error_str = '-- EXCEPTION: Unable to create table: ' + \
+                    '{error_msg} on {table_type} with {create_table_str}'.\
+                    format(
+                        error_msg=error_msg,
+                        table_type=str(self.table_type),
+                        create_table_str=self.get_table_create_string()
+                    )
+                self._debug_service.message(error_str, 'ERROR')
                 raise error_msg
 
-            if debug:
-                print(
-                    '---- {schema_name}.{table_name} CREATED'.\
-                    format(
-                        schema_name=schema_name,
-                        table_name =table_name
-                    ))
+            debug_str = '-- {schema_name}.{table_name} CREATED'.\
+                format(
+                    schema_name=schema_name,
+                    table_name =table_name
+                )
+            self._debug_service.message(debug_str, 'INFO')
         else:
-            if debug:
-                print(
-                    '---- TABLE {schema_name}.{table_name} EXISTS'.\
-                    format(
-                        schema_name=schema_name,
-                        table_name =table_name
-                    ))
+            debug_str = '-- TABLE {schema_name}.{table_name} EXISTS'.\
+                format(
+                    schema_name=schema_name,
+                    table_name =table_name
+                )
+            self._debug_service(debug_str, 'DEBUG')
 
     def test_table_headers(
             self,
             table_name,
             schema_name,
-            defined_headers,
-            debug=False,
-            logger=None
+            defined_headers
+            #debug=False,
+            #logger=None
 
     ):
         '''test if headers are correctly covered by cfg'''
-        if not debug:
-            debug = self._debug
-        if not logger:
-            logger= self._logger
+        debug_str = '-- test_table_headers({table_name}, {schema_name}, {defined_headers})'.\
+            format(
+                table_name=table_name,
+                schema_name=schema_name,
+                defined_headers=defined_headers
+            )
+        self._debug_service.message(debug_str, 'INFO')
 
         header_query = ''
-        header_result = False #TODO: remove?
         if self.table_type == TableType.MySQL:
             header_query = \
             '''SELECT `COLUMN_NAME`
@@ -252,26 +300,34 @@ class SQLTable(Database):
                 'unsupported table type: ' + str(self.table_type),
                 table_name
             )
+        self._debug_service.message('-- header_query={0}'.format(header_query), 'DEBUG')
 
         try:
             headers = self._direct_query(header_query)
         except Exception as error_msg:
-            #TODO logger
+            error_str = '-- EXCEPTION query failed: ' + \
+                '{error_msg} on {table_type} with {query}'.\
+                format(
+                    error_msg=error_msg,
+                    table_type=str(self.table_type),
+                    query=header_query
+                )
+            self._debug_service.message(error_str, 'ERROR')
             raise error_msg
+
         #TODO mysql specific? vvv
         headers = table_utils.mysql_cleanup_results(headers)
+        self._debug_service.message('-- headers={0}'.format(','.join(headers)), 'DEBUG')
 
-        if debug:
-            print(headers)
         #FIXME vvv bool_test_headers return values are weird
         if not table_utils.bool_test_headers(
                 headers,
                 defined_headers,
-                debug=debug,
-                logger=logger #TODO
+                debug=self._debug_service.do_debug,
+                logger=self._debug_service.get_logger() #TODO
         ):
             error_msg = 'Table headers not equivalent'
-            print(error_msg)
+            self._debug_service.message(error_msg, 'ERROR')
             raise MismatchedHeaders(
                 error_msg,
                 table_name)
@@ -401,11 +457,6 @@ class SQLTable(Database):
                 error_msg,
                 self.table_name
             )
-
-    @abc.abstractmethod
-    def get_table_create_string(self):
-        '''get/parse table-create file'''
-        pass
 
     def __del__(self):
         '''release connection/cursor'''
