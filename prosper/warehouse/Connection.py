@@ -271,8 +271,6 @@ class SQLTable(Database):
             table_name,
             schema_name,
             defined_headers
-            #debug=False,
-            #logger=None
 
     ):
         '''test if headers are correctly covered by cfg'''
@@ -342,19 +340,32 @@ class SQLTable(Database):
             **kwargs
     ):
         '''process queries to fetch data'''
+        debug_str = 'get_data()' #TODO: parse args for log?
+        self._debug_service.message(debug_str, 'INFO')
+
         #**kwargs: filter query keys
         #*args: data keys to return
         if kwargs_passthrough:
+            debug_str = '-- received override kwargs: {0}'.\
+                format(','.join(kwargs_passthrough.keys()))
+            self._debug_service.message(debug_str, 'DEBUG')
             kwargs = kwargs_passthrough
 
         if isinstance(datetime_start, int):
             #assume "last x days"
+            debug_str = '-- received INT not DATETIME.  Converting'
+            self._debug_service.message(debug_str, 'DEBUG')
             datetime_start = table_utils.convert_days_to_datetime(datetime_start)
 
         ## Test argument contents before executing ##
         try:
             table_utils.test_kwargs_headers(self.primary_keys, kwargs)
         except Exception as error_msg:
+            error_str = 'EXCEPTION query/kwarg keys invalid ' + \
+                'exception={0}'.format(error_msg) + \
+                'kwargs.keys={0} '.format(','.join(kwargs.keys())) + \
+                'primary_keys={0}'.format(','.join(self.primary_keys))
+            self._debug_service.message(error_str, 'ERROR')
             raise InvalidQueryKeys(
                 error_msg,
                 self.table_name
@@ -362,6 +373,11 @@ class SQLTable(Database):
         try:
             table_utils.test_args_headers(self.data_keys, args)
         except Exception as error_msg:
+            error_str = 'EXCEPTION data/args keys invalid ' + \
+                'exception={0}'.format(error_msg) + \
+                'args={0} '.format(','.join(args)) + \
+                'data_keys={0}'.format(','.join(self.data_keys))
+            self._debug_service.message(error_str, 'ERROR')
             raise InvalidDataKeys(
                 error_msg,
                 self.table_name
@@ -412,16 +428,17 @@ class SQLTable(Database):
                 index_key=self.index_key,
                 limit_filter=limit_filter
             )
-        if self._debug: print(query_string)
-        #exit()
+        self._debug_service.message(query_string, 'DEBUG')
         pandas_dataframe = pandas.read_sql(
             query_string,
             self._connection
             )
+        self._debug_service.message(str(pandas_dataframe), 'DEBUG')
         return pandas_dataframe
 
     def put_data(self, payload):
         '''tests and pushes data to datastore'''
+        self._debug_service.message('put_data()', 'INFO')
         if not isinstance(payload, pandas.DataFrame):
             raise NotImplementedError('put_data() requires Pandas.DataFrame.  No conversion implemented')
 
@@ -432,8 +449,8 @@ class SQLTable(Database):
             self._logger
         )
 
-        #FIXME: test to see if index NEEDS to change (rather than forcing)
         if not payload.index.name:
+            self._debug_service.message('-- setting payload.index to {0}'.format(self.index_key))
             payload.set_index(
                 keys=self.index_key,
                 drop=True,
@@ -445,6 +462,7 @@ class SQLTable(Database):
             raise MismatchedHeaders(test_result, self.table_name)
 
         try:
+            #FIXME vvv to_sql is a problem
             payload.to_sql(
                 name=self.table_name,
                 con=self._connection,
@@ -453,6 +471,11 @@ class SQLTable(Database):
                 if_exists='append'
             )
         except Exception as error_msg:
+            error_str = '''EXCEPTION unable to write to table:
+        exception={error_msg}'''.\
+                format(
+                    error_msg=error_msg
+                )
             raise UnableToWriteToDatastore(
                 error_msg,
                 self.table_name
