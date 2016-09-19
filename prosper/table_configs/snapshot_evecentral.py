@@ -78,6 +78,7 @@ class snapshot_evecentral(Connection.SQLTable):
                 error_msg,
                 ME
             )
+
         debug_str='primary_keys={0} data_keys={1} index_key={2}'.\
             format(
                 ','.join(tmp_primary_keys),
@@ -230,7 +231,7 @@ if __name__ == '__main__':
     print(ME)
     DEBUG = True
     DEBUG_LOGGER = create_logger(
-        'snapshot_evecentral',
+        'debug_snapshot_evecentral',
         HERE,
         None,
         'DEBUG'

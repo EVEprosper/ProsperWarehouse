@@ -33,6 +33,8 @@ class crest_markethistory(Connection.SQLTable):
 
     def get_table_create_string(self):
         '''get/parse table-create file'''
+        self._debug_service.message('crest_markethistory.get_table_create_string()', 'INFO')
+
         full_table_filepath = None
         table_create_path = config.get(ME, 'table_create_file')
         if '..' in table_create_path:
@@ -40,16 +42,23 @@ class crest_markethistory(Connection.SQLTable):
             full_table_filepath = local.path(table_create_path)
         else:
             full_table_filepath = local.path(table_create_path)
+        self._debug_service.message(
+            '-- full_table_filepath: {0}'.format(full_table_filepath), 'DEBUG')
 
         #TODO: test `exists`
         full_create_string = ''
         with open(full_table_filepath, 'r') as file_handle:
             full_create_string = file_handle.read()
 
+        self._debug_service.message(
+            '-- full_create_string: {0}'.format(full_create_string), 'DEBUG')
+
         return full_create_string
 
     def get_keys(self):
         '''get primary/data keys from config file'''
+        self._debug_service.message('crest_markethistory.get_keys()', 'INFO')
+
         tmp_primary_keys = []
         tmp_data_keys = []
         print('--SNAPSHOT: get_keys()')
@@ -58,21 +67,42 @@ class crest_markethistory(Connection.SQLTable):
             tmp_data_keys = config.get(ME, 'data_keys').split(',')
             self.index_key = config.get(ME, 'index_key') #FIXME: this is bad
         except KeyError as error_msg:
+            error_str = '''EXCEPTION: keys missing:
+        exception={error_msg}
+        primary_keys={primary_keys}
+        data_keys={data_keys}
+        index_key={index_key}'''.\
+                format(
+                    error_msg=str(error_msg),
+                    primary_keys=','.join(tmp_data_keys),
+                    data_keys=','.join(tmp_data_keys),
+                    index_key=self.index_key
+                )
+            self._debug_service.message(error_str, 'ERROR')
             raise Connection.TableKeysMissing(
                 error_msg,
                 ME
             )
 
+        debug_str='primary_keys={0} data_keys={1} index_key={2}'.\
+            format(
+                ','.join(tmp_primary_keys),
+                ','.join(tmp_data_keys),
+                self.index_key
+            )
+        self._debug_service.message(debug_str, 'DEBUG')
         return tmp_primary_keys, tmp_data_keys
 
     def _set_info(self):
         '''save info about table/datasource'''
         #TODO move up?
+        self._debug_service.message('crest_markethistory._set_info()', 'INFO')
         return CONNECTION_VALUES['table'], CONNECTION_VALUES['schema']
 
     def get_connection(self):
         '''get con/cur for db connections'''
-        print('--SNAPSHOT: get_connection()')
+        self._debug_service.message('crest_markethistory.get_connection()', 'INFO')
+        self._debug_service.message(str(CONNECTION_VALUES), 'DEBUG')
         tmp_connection = mysql.connector.connect(
             user    =CONNECTION_VALUES['user'],
             password=CONNECTION_VALUES['passwd'],
@@ -86,33 +116,50 @@ class crest_markethistory(Connection.SQLTable):
 
     def test_table(self):
         '''test table connection/contents'''
-        if DEBUG: print('--SNAPSHOT: test_table()')
+        self._debug_service.message('crest_markethistory.test_table()', 'INFO')
         ## Check if table exists ##
-        if DEBUG: print('----table_exists: start')
+        self._debug_service.message('-- table exists test: START', 'INFO')
         try:
             self.test_table_exists(
                 CONNECTION_VALUES['table'],
                 CONNECTION_VALUES['schema']
             )
         except Exception as error_msg:
-            #TODO logger
+            error_str = '''EXCEPTION: table does not exist, unable to fix:
+        exception={error_msg}
+        table={schema}.{table}'''.\
+                format(
+                    error_msg=str(error_msg),
+                    schema=CONNECTION_VALUES['schema'],
+                    table=CONNECTION_VALUES['table']
+                )
+            self._debug_service.message(error_str, 'ERROR')
             raise error_msg
-        if DEBUG: print('----test_table_exists: PASS')
+
+        self._debug_service.message('-- table exists test: PASS', 'INFO')
 
         ## Check if headers config is correct ##
-        if DEBUG: print('----table_headers: start')
+        self._debug_service.message('-- table headers test: START', 'INFO')
 
         try:
             self.test_table_headers(
                 CONNECTION_VALUES['table'],
                 CONNECTION_VALUES['schema'],
-                self.all_keys,
-                DEBUG
+                self.all_keys
             )
         except Exception as error_msg:
-            #TODO: logger
+            error_str = '''EXCEPTION: table headers missmatch:
+        exception={exception}
+        table={schema}.{table}'''.\
+                format(
+                    exception=str(error_msg),
+                    schema=CONNECTION_VALUES['schema'],
+                    table=CONNECTION_VALUES['table']
+                )
+            self._debug_service.message(error_str, 'ERROR')
             raise error_msg
-        if DEBUG: print('----test_table_headers: PASS')
+
+        self._debug_service.message('-- table headers test: PASS', 'INFO')
 
         self._latest_entry = self.latest_entry()
 
@@ -121,20 +168,24 @@ class crest_markethistory(Connection.SQLTable):
 
     def latest_entry(self, **kwargs):
         '''check source for latest entry (given kwargs)'''
+        self._debug_service.message('crest_markethistory.latest_entry()', 'INFO')
         pd_dataframe = self.get_data(
             '1970-01-01',
             kwargs_passthrough=kwargs,
             limit=1,
             )
-        if DEBUG: print('----latest_entry=')
+
         if pd_dataframe.empty:
+            self._debug_service.message('-- latest_entry=None, no entries found')
             return None
         else:
-            if DEBUG: print(pd_dataframe[self.index_key][0])
-            return pd_dataframe[self.index_key][0]
+            latest_entry = pd_dataframe[self.index_key][0]
+            self._debug_service.message('-- latest_entry={0}'.format(str(latest_entry)), 'DEBUG')
+            return latest_entry
 
     def put_data(self, payload):
         '''tests and pushes data to datastore'''
+        self._debug_service.message('crest_markethistory.put_data()', 'INFO')
         if not isinstance(payload, pandas.DataFrame):
             raise NotImplementedError('put_data() requires Pandas.DataFrame.  No conversion implemented')
 
@@ -145,8 +196,12 @@ class crest_markethistory(Connection.SQLTable):
                 drop=True,
                 inplace=True
             )
-        if DEBUG: print('----Testing dataframe against existing table')
-        if DEBUG: print(self._latest_entry)
+        debug_str = '-- Testing dataframe against existing table: ' +\
+            'latest_entry={latest_entry}'.\
+            format(
+                latest_entry=self._latest_entry
+            )
+        self._debug_service.message(debug_str, 'DEBUG')
         if self._latest_entry:
             # avoid overwrites
             datemin = self._latest_entry + timedelta(days=1)
@@ -154,14 +209,18 @@ class crest_markethistory(Connection.SQLTable):
             print('datemin: ' + str(datemin))
             print('datemax: ' + str(datemax))
             if payload.index.values.max() == self._latest_entry:
-                print('WARNING: database already up-to-date, SKIPPING WRITE')
+                self._debug_service.message(
+                    'WARNING: db already up-to-date, SKIPPING WRITE', 'WARNING')
                 return
             else:
-                if DEBUG: print('----Adjusting dataframe')
+                self._debug_service.message(
+                    '-- Adjusting dataframe to {0}'.format(self._latest_entry), 'INFO')
                 payload = payload.ix[
                     datemin:\
                     datemax
                     ]
+        self._debug_service.message('-- returning to super().put_data()', 'INFO')
+        self._debug_service.message(str(payload), 'DEBUG')
         super().put_data(payload)
 
 def build_sample_dataframe(days):
@@ -234,11 +293,20 @@ def build_sample_dataframe(days):
 if __name__ == '__main__':
     print(ME)
     DEBUG = True
+    DEBUG_LOGGER = create_logger(
+        'debug_crest_markethistory',
+        HERE,
+        None,
+        'DEBUG'
+        )
+    DEBUG_LOGGER.log(10, '**STARTING TEST RUN**')
+
     CONNECTION_VALUES = table_utils.get_config_values(config, ME, DEBUG)
     SAMPLE_DATA_FRAME = build_sample_dataframe(10)
     TEST_OBJECT = crest_markethistory(
         CONNECTION_VALUES['table'],
-        debug=DEBUG
+        debug=DEBUG,
+        logger=DEBUG_LOGGER
     )
     TEST_OBJECT.put_data(SAMPLE_DATA_FRAME)
     TEST_OBJECT.latest_entry(
