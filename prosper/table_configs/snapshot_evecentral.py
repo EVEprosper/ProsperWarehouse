@@ -104,7 +104,6 @@ class snapshot_evecentral(Connection.SQLTable):
                 CONNECTION_VALUES['table'],
                 CONNECTION_VALUES['schema'],
                 self.all_keys,
-                DEBUG
             )
         except Exception as error_msg:
             #TODO: logger
@@ -178,7 +177,7 @@ def build_sample_dataframe(days, frequency):
         drop=True,
         inplace=True
     )
-    if DEBUG: print(dataframe)
+    #if DEBUG: print(dataframe)
     return dataframe
 
 ## MAIN = TEST ##
@@ -186,6 +185,7 @@ if __name__ == '__main__':
     print(ME)
     DEBUG = True
     CONNECTION_VALUES = table_utils.get_config_values(config, ME, DEBUG)
+    print(CONNECTION_VALUES)
     SAMPLE_DATA_FRAME = build_sample_dataframe(2, 12)
     TEST_OBJECT = snapshot_evecentral(
         CONNECTION_VALUES['table'],

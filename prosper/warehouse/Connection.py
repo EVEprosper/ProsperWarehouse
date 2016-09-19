@@ -264,7 +264,7 @@ class SQLTable(Database):
                     schema_name=schema_name,
                     table_name =table_name
                 )
-            self._debug_service(debug_str, 'DEBUG')
+            self._debug_service.message(debug_str, 'DEBUG')
 
     def test_table_headers(
             self,
@@ -476,6 +476,7 @@ class SQLTable(Database):
                 format(
                     error_msg=error_msg
                 )
+            self._debug_service(error_str, 'ERROR')
             raise UnableToWriteToDatastore(
                 error_msg,
                 self.table_name
