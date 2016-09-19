@@ -11,7 +11,7 @@ import prosper.warehouse.Connection as Connection
 import prosper.warehouse.Utilities as table_utils
 
 HERE = path.abspath(path.dirname(__file__))
-ME = __file__.replace('.py', '')
+ME = __file__.replace('.py', '') #FIXME: only valid for single-config profiles
 CONFIG_ABSPATH = path.join(HERE, 'table_config.cfg')
 
 print('SNAPSHOT: GET_CONFIG')
@@ -21,7 +21,9 @@ CONNECTION_VALUES = table_utils.get_config_values(config, ME)
 DEBUG = False
 class snapshot_evecentral(Connection.SQLTable):
     '''worker class for handling eve_central data'''
+    #_debug_service = super()._debug_service
     def set_local_path(self):
+        '''push local path up to parent'''
         return HERE
 
     def _define_table_type(self):
@@ -30,6 +32,7 @@ class snapshot_evecentral(Connection.SQLTable):
 
     def get_table_create_string(self):
         '''get/parse table-create file'''
+        self._debug_service.message('snapshot_evecentral.get_table_create_string()', 'INFO')
         full_table_filepath = None
         table_create_path = config.get(ME, 'table_create_file')
         if '..' in table_create_path:
@@ -37,39 +40,64 @@ class snapshot_evecentral(Connection.SQLTable):
             full_table_filepath = local.path(table_create_path)
         else:
             full_table_filepath = local.path(table_create_path)
+        self._debug_service.message(
+            '-- full_table_filepath: {0}'.format(full_table_filepath), 'DEBUG')
 
-        #TODO: test `exists`
         full_create_string = ''
         with open(full_table_filepath, 'r') as file_handle:
             full_create_string = file_handle.read()
 
+        self._debug_service.message(
+            '-- full_create_string: {0}'.format(full_create_string), 'DEBUG')
         return full_create_string
 
     def get_keys(self):
         '''get primary/data keys from config file'''
+        self._debug_service.message('snapshot_evecentral.get_keys()', 'INFO')
+
         tmp_primary_keys = []
         tmp_data_keys = []
-        print('--SNAPSHOT: get_keys()')
         try:
             tmp_primary_keys = config.get(ME, 'primary_keys').split(',')
             tmp_data_keys = config.get(ME, 'data_keys').split(',')
             self.index_key = config.get(ME, 'index_key') #FIXME: this is bad
         except KeyError as error_msg:
+            error_str = '''EXCEPTION: keys missing:
+        exception={error_msg}
+        primary_keys={primary_keys}
+        data_keys={data_keys}
+        index_key={index_key}'''.\
+                format(
+                    error_msg=str(error_msg),
+                    primary_keys=','.join(tmp_data_keys),
+                    data_keys=','.join(tmp_data_keys),
+                    index_key=self.index_key
+                )
+            self._debug_service.message(error_str, 'ERROR')
             raise Connection.TableKeysMissing(
                 error_msg,
                 ME
             )
-
+        debug_str='primary_keys={0} data_keys={1} index_key={2}'.\
+            format(
+                ','.join(tmp_primary_keys),
+                ','.join(tmp_data_keys),
+                self.index_key
+            )
+        self._debug_service.message(debug_str, 'DEBUG')
         return tmp_primary_keys, tmp_data_keys
 
     def _set_info(self):
         '''save info about table/datasource'''
         #TODO move up?
+        self._debug_service.message('snapshot_evecentral._set_info()', 'INFO')
         return CONNECTION_VALUES['table'], CONNECTION_VALUES['schema']
 
     def get_connection(self):
         '''get con/cur for db connections'''
-        print('--SNAPSHOT: get_connection()')
+        self._debug_service.message('snapshot_evecentral.get_connection()', 'INFO')
+        self._debug_service.message(str(CONNECTION_VALUES), 'DEBUG')
+        #FIXME vvv try/exception
         tmp_connection = mysql.connector.connect(
             user    =CONNECTION_VALUES['user'],
             password=CONNECTION_VALUES['passwd'],
@@ -83,22 +111,30 @@ class snapshot_evecentral(Connection.SQLTable):
 
     def test_table(self):
         '''test table connection/contents'''
-        if DEBUG: print('--SNAPSHOT: test_table()')
+        self._debug_service.message('snapshot_evecentral.test_table()', 'INFO')
         ## Check if table exists ##
-        if DEBUG: print('----table_exists: start')
+        self._debug_service.message('-- table exists test: START', 'INFO')
         try:
             self.test_table_exists(
                 CONNECTION_VALUES['table'],
                 CONNECTION_VALUES['schema']
             )
         except Exception as error_msg:
-            #TODO logger
+            error_str = '''EXCEPTION: table does not exist, unable to fix:
+        exception={error_msg}
+        table={schema}.{table}'''.\
+                format(
+                    error_msg=str(error_msg),
+                    schema=CONNECTION_VALUES['schema'],
+                    table=CONNECTION_VALUES['table']
+                )
+            self._debug_service.message(error_str, 'ERROR')
             raise error_msg
-        if DEBUG: print('----test_table_exists: PASS')
+
+        self._debug_service.message('-- table exists test: PASS', 'INFO')
 
         ## Check if headers config is correct ##
-        if DEBUG: print('----table_headers: start')
-
+        self._debug_service.message('-- table headers test: START', 'INFO')
         try:
             self.test_table_headers(
                 CONNECTION_VALUES['table'],
@@ -106,9 +142,18 @@ class snapshot_evecentral(Connection.SQLTable):
                 self.all_keys,
             )
         except Exception as error_msg:
-            #TODO: logger
+            error_str = '''EXCEPTION: table headers missmatch:
+        exception={exception}
+        table={schema}.{table}'''.\
+                format(
+                    exception=str(error_msg),
+                    schema=CONNECTION_VALUES['schema'],
+                    table=CONNECTION_VALUES['table']
+                )
+            self._debug_service.message(error_str, 'ERROR')
             raise error_msg
-        if DEBUG: print('----test_table_headers: PASS')
+
+        self._debug_service.message('-- table headers test: PASS', 'INFO')
 
     def latest_entry(self, **kwargs):
         '''not implemented'''

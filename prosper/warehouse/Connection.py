@@ -72,16 +72,19 @@ class Database(metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def set_local_path(self):
         '''set CWD path for sourcing files'''
+        #TODO: is level correct/required?
         pass
 
     @abc.abstractmethod
     def _define_table_type(self):
         '''helps define technology for class definition'''
+        #TODO: is level correct/required?
         pass
 
     @abc.abstractmethod
     def get_keys(self):
         '''get primary/data keys for query manipulation'''
+        #TODO: move config parser up to higher layer?
         pass
 
     @abc.abstractmethod
@@ -132,8 +135,8 @@ class SQLTable(Database):
 
     def __init__(self, datasource_name, debug=False, logger=None):
         '''Traditional SQL-style hook setup'''
-        tmp_debug_service = LoggerDebugger(debug, logger)
-        tmp_debug_service.message('SQLTable __init__()', 'INFO')
+        self._debug_service = LoggerDebugger(debug, logger)
+        self._debug_service.message('SQLTable __init__()', 'INFO')
         self._connection,self._cursor = self.get_connection()
         self.table_name, self.schema_name = self._set_info()
         super().__init__(datasource_name, debug, logger)
@@ -192,9 +195,7 @@ class SQLTable(Database):
     def test_table_exists(
             self,
             table_name,
-            schema_name,
-            #debug=False,
-            #logger=None
+            schema_name
     ):
         '''basic test for table existing'''
         debug_str = '-- test_table_exists({table_name}, {schema_name})'.\
@@ -225,7 +226,7 @@ class SQLTable(Database):
             error_str = '-- EXCEPTION query failed: ' + \
                 '{error_msg} on {table_type} with {query}'.\
                 format(
-                    error_msg=error_msg,
+                    error_msg=str(error_msg),
                     table_type=str(self.table_type),
                     query=exists_query
                 )
@@ -245,7 +246,7 @@ class SQLTable(Database):
                 error_str = '-- EXCEPTION: Unable to create table: ' + \
                     '{error_msg} on {table_type} with {create_table_str}'.\
                     format(
-                        error_msg=error_msg,
+                        error_msg=str(error_msg),
                         table_type=str(self.table_type),
                         create_table_str=self.get_table_create_string()
                     )
@@ -264,7 +265,7 @@ class SQLTable(Database):
                     schema_name=schema_name,
                     table_name =table_name
                 )
-            self._debug_service.message(debug_str, 'DEBUG')
+            self._debug_service.message(debug_str, 'INFO')
 
     def test_table_headers(
             self,
@@ -306,7 +307,7 @@ class SQLTable(Database):
             error_str = '-- EXCEPTION query failed: ' + \
                 '{error_msg} on {table_type} with {query}'.\
                 format(
-                    error_msg=error_msg,
+                    error_msg=str(error_msg),
                     table_type=str(self.table_type),
                     query=header_query
                 )
@@ -362,7 +363,7 @@ class SQLTable(Database):
             table_utils.test_kwargs_headers(self.primary_keys, kwargs)
         except Exception as error_msg:
             error_str = 'EXCEPTION query/kwarg keys invalid ' + \
-                'exception={0}'.format(error_msg) + \
+                'exception={0}'.format(str(error_msg)) + \
                 'kwargs.keys={0} '.format(','.join(kwargs.keys())) + \
                 'primary_keys={0}'.format(','.join(self.primary_keys))
             self._debug_service.message(error_str, 'ERROR')
@@ -374,7 +375,7 @@ class SQLTable(Database):
             table_utils.test_args_headers(self.data_keys, args)
         except Exception as error_msg:
             error_str = 'EXCEPTION data/args keys invalid ' + \
-                'exception={0}'.format(error_msg) + \
+                'exception={0}'.format(str(error_msg)) + \
                 'args={0} '.format(','.join(args)) + \
                 'data_keys={0}'.format(','.join(self.data_keys))
             self._debug_service.message(error_str, 'ERROR')
@@ -474,7 +475,7 @@ class SQLTable(Database):
             error_str = '''EXCEPTION unable to write to table:
         exception={error_msg}'''.\
                 format(
-                    error_msg=error_msg
+                    error_msg=str(error_msg)
                 )
             self._debug_service(error_str, 'ERROR')
             raise UnableToWriteToDatastore(
