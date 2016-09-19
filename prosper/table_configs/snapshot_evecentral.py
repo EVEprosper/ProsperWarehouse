@@ -229,12 +229,20 @@ def build_sample_dataframe(days, frequency):
 if __name__ == '__main__':
     print(ME)
     DEBUG = True
+    DEBUG_LOGGER = create_logger(
+        'snapshot_evecentral',
+        HERE,
+        None,
+        'DEBUG'
+        )
+    DEBUG_LOGGER.log(10, '**STARTING TEST RUN**')
     CONNECTION_VALUES = table_utils.get_config_values(config, ME, DEBUG)
     print(CONNECTION_VALUES)
     SAMPLE_DATA_FRAME = build_sample_dataframe(2, 12)
     TEST_OBJECT = snapshot_evecentral(
         CONNECTION_VALUES['table'],
-        debug=DEBUG
+        debug=DEBUG,
+        logger=DEBUG_LOGGER
     )
     TEST_OBJECT.put_data(SAMPLE_DATA_FRAME)
     TEST_DATA = TEST_OBJECT.get_data(
