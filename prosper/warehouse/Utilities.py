@@ -1,6 +1,7 @@
 '''Utilities.py: working functions for parsing database stuff'''
 
 import datetime
+import re
 
 ## TODO: UTILTIES ##
 def bool_can_write(DatabaseClass):
@@ -127,6 +128,7 @@ def test_args_headers(data_keys, args):
     else:
         return True
 
+ILICIT_PATTERN = re.compile('[`\\;]+|(--)+')
 def format_kwargs(kwargs, table_type=None):
     '''parse key:values to build up filter keys'''
     #TODO: change query magic on table_type
@@ -135,9 +137,35 @@ def format_kwargs(kwargs, table_type=None):
         return ''
     query_list = []
     for key, value in kwargs.items():
-        value_str = '\'{0}\''.format(value) if isinstance(value, str) \
-            else '{0}'.format(value)
-        partial_str = '{key}={value} '.\
+        #FIXME: validate values: SQL injection risk
+        value_str = ''
+        bool_multi = False
+        if ILICIT_PATTERN.match(str(value)):
+            raise RuntimeError('SQL INJECTION SUSPECT: {0}'.format(value))
+
+        if isinstance(value, str):
+            if ',' not in value_str:
+                value_str = '\'{0}\''.format(value)
+            else:
+                #test collection of strings to add ''?
+                value_str = value
+                bool_multi= True
+
+        elif isinstance(value, list):
+            value_str = ','.join(str(v) for v in value)
+            bool_multi= True
+        elif isinstance(value, int):
+            value_str = value
+
+        partial_str = ''
+        if bool_multi:
+            partial_str = '{key} IN ({value_str}) '.\
+                format(
+                    key=key,
+                    value_str=value_str
+                )
+        else:
+            partial_str = '{key}={value} '.\
             format(
                 key=key,
                 value=value_str

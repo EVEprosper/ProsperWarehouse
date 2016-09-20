@@ -313,13 +313,12 @@ if __name__ == '__main__':
         regionid=99999999,
         typeid=34
         )
-    exit()
     TEST_DATA = TEST_OBJECT.get_data(
         10,
         "avgPrice",
         "volume",
         regionid=99999999,#30000142,
-        typeid=34,
+        typeid=[34, 40],
     )
     print(TEST_DATA)
 
