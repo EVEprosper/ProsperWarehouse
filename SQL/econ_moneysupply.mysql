@@ -1,0 +1,10 @@
+DROP TABLE IF EXISTS `econ_moneysupply`;
+CREATE TABLE `econ_moneysupply` (
+    `price_date`    DATE        NOT NULL,
+    `character`     DOUBLE()    NOT NULL,
+    `corporation`   DOUBLE()    NOT NULL,
+    `total`         DOUBLE()    NOT NULL,
+    `iskvolume`     DOUBLE()    NOT NULL,
+    `iskvelocity`   FLOAT()     NOT NULL,
+    PRIMARY_KEY(price_date))
+ENGINE=InnoDB DEFAULT CHARSET=latin1;
