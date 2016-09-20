@@ -415,7 +415,7 @@ class SQLTable(Database):
                 )
         query_specific_filter = table_utils.format_kwargs(kwargs)
         query_string = '''
-            SELECT {index_key},{query_header_string}
+            SELECT {index_key},{query_keys},{query_header_string}
             FROM {table_name}
             WHERE {query_general_filter}
             {query_specific_filter}
@@ -423,6 +423,7 @@ class SQLTable(Database):
             {limit_filter}'''.\
             format(
                 query_header_string=query_header_string,
+                query_keys=str(','.join(self.primary_keys)),
                 table_name=self.table_name,
                 query_general_filter=query_general_filter,
                 query_specific_filter=query_specific_filter,
