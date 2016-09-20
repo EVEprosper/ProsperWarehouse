@@ -1,0 +1,8 @@
+DROP TABLE IF EXISTS `eve_patchlist`;
+CREATE TABLE `eve_patchlist` (
+    `event_datetime`    DATETIME    NOT NULL,
+    `event_type`        ENUM('patch','event','pvp','IRL','test') NOT NULL,
+    `event_name`        VARCHAR(32) NOT NULL,
+    PRIMARY KEY(event_datetime))
+ENGINE=InnoDB DEFAULT CHARSET=latin1;
+CREATE INDEX eventtype ON eve_patchlist(event_type);
