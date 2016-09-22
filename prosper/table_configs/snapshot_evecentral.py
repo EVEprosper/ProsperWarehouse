@@ -218,12 +218,56 @@ def build_sample_dataframe(days, frequency):
         'sell_avg':sellavgs,
         'sell_volume':sellvols
         })
+    typeids = [40] * sizeof_list
+    buymaxs = random.randint(
+        low=700,
+        high=900,
+        size=sizeof_list
+        ) / 100
+    buyavgs = random.randint(
+        low=700,
+        high=900,
+        size=sizeof_list
+        ) / 100
+    buyvols = random.randint(
+        low=500000,
+        high=500000000,
+        size=sizeof_list)
+    sellmins = random.randint(
+        low=800,
+        high=1000,
+        size=sizeof_list
+        ) / 100
+    sellavgs = random.randint(
+        low=800,
+        high=1000,
+        size=sizeof_list
+        ) / 100
+    sellvols = random.randint(
+        low=500000,
+        high=500000000,
+        size=sizeof_list)
+    dataframe2 = pandas.DataFrame({
+        'price_datetime':datetime_range,
+        'typeid':typeids,
+        'locationid':locationids,
+        'location_type':locationtypes,
+        'buy_max':buymaxs,
+        'buy_avg':buyavgs,
+        'buy_volume':buyvols,
+        'sell_min':sellmins,
+        'sell_avg':sellavgs,
+        'sell_volume':sellvols
+        })
+    dataframe = dataframe.append(dataframe2)
     dataframe.set_index(
         keys='price_datetime',
+        #keys=('price_datetime','typeid','locationid'),
         drop=True,
         inplace=True
     )
-    #if DEBUG: print(dataframe)
+
+    if DEBUG: dataframe.to_csv('pandas_snapshot_evecentral.csv')
     return dataframe
 
 ## MAIN = TEST ##
@@ -251,7 +295,7 @@ if __name__ == '__main__':
         "sell_min",
         "sell_volume",
         locationid=99999999,#30000142,
-        typeid=34,
+        typeid=[34,40,99],
     )
     print(TEST_DATA)
     #TODO compare TEST_DATA and SAMPLE_DATA_FRAME
