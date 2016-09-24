@@ -15,6 +15,14 @@ def include_all_subfiles(path_included):
 
     return file_list
 
+def hack_find_packages(include_str):
+    '''setuptools.find_packages({include_str}) does not work.  Adjust pathing'''
+    new_list = [include_str]
+    for element in find_packages(include_str):
+        new_list.append(include_str + '.' + element)
+
+    return new_list
+
 setup(
     name='ProsperWarehouse',
     version='0.0.1',
@@ -23,7 +31,7 @@ setup(
         'Programming Language :: Python :: 3.5'
     ],
     keywords='prosper eveonline api database',
-    packages=find_packages(),
+    packages=hack_find_packages('prosper'),
     data_files=[
         ('SQL', include_all_subfiles('SQL')),
         ('docs', include_all_subfiles('docs'))
