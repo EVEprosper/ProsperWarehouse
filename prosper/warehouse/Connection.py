@@ -321,7 +321,7 @@ class SQLTable(Database):
         if not table_utils.bool_test_headers(
                 headers,
                 defined_headers,
-                debug=self._debug_service.do_debug,
+                debug=self._debug,
                 logger=self._debug_service.get_logger() #TODO
         ):
             error_msg = 'Table headers not equivalent'
