@@ -34,19 +34,16 @@ class Database(metaclass=abc.ABCMeta):
     def __init__(self, datasource_name, debug=False, logger=None):
         '''basic info about all databases'''
         self._debug_service = LoggerDebugger(debug, logger)
-        debug_str = \
-        '''Database __init__(
-        {datasource_name},
-        {debug}
-        {logger})'''.\
-            format(
-                datasource_name=datasource_name,
-                debug=str(debug),
-                logger=str(logger)
-            )
-        self._debug_service.message(debug_str, 'INFO')
 
-        self._debug_service.message('-- Global setup', 'DEBUG')
+        self._debug_service.info(
+            'Database __init__(' + \
+            '\r\tdatasouce_name={0},'.format(datasource_name) + \
+            '\r\tdebug={0},'.format(str(debug)) + \
+            '\r\tlogger={0})'.format(str(logger))
+        )
+
+        self._debug_service.debug('-- Global Setup')
+
         self.datasource_name = datasource_name
         self._debug = debug
         self._logger= logger
@@ -58,12 +55,16 @@ class Database(metaclass=abc.ABCMeta):
         self.all_keys.append(self.index_key)
         self.all_keys.extend(self.primary_keys)
         self.all_keys.extend(self.data_keys)
-        self._debug_service.message('--DATABASE: got keys from config', 'INFO')
+        self._debug_service.info('--DATABASE: got keys from config')
 
         self.table_type = self._define_table_type()
         try:
             self.test_table()
         except Exception as error_msg:
+            self._debug_service.error(
+                'EXCEPTION: test_table failed' + \
+                '\r\terror_msg={0}'.format(str(error_msg))
+            )
             raise error_msg
 
     def __str__(self):
@@ -136,7 +137,7 @@ class SQLTable(Database):
     def __init__(self, datasource_name, debug=False, logger=None):
         '''Traditional SQL-style hook setup'''
         self._debug_service = LoggerDebugger(debug, logger)
-        self._debug_service.message('SQLTable __init__()', 'INFO')
+        self._debug_service.info('SQLTable __init__()')
         self._connection,self._cursor = self.get_connection()
         self.table_name, self.schema_name = self._set_info()
         super().__init__(datasource_name, debug, logger)
@@ -154,7 +155,7 @@ class SQLTable(Database):
     def _direct_query(self, query_str):
         '''direct query for SQL tables'''
         #TODO: if/else check for every query seems wasteful, rework?
-        self._debug_service.message('--_direct_query', 'INFO')
+        self._debug_service.info('--_direct_query')
 
         #FIXME vvv do different coonections need different execute/fetch cmds?
         if self.table_type == TableType.MySQL:
@@ -163,6 +164,7 @@ class SQLTable(Database):
                 self._cursor.execute(query_str)
                 query_result = self._cursor.fetchall()
             except Exception as error_msg:
+                #log error one step up
                 raise error_msg
 
             return query_result
@@ -179,10 +181,10 @@ class SQLTable(Database):
 
     def _create_table(self, full_create_string):
         '''handles executing table-create query'''
-        self._debug_service.message('--_create_table', 'INFO')
+        self._debug_service.info('--_create_table')
         command_list = full_create_string.split(';')
         for command in command_list:
-            self._debug_service.message('-- `{0}`'.format(command), 'DEBUG')
+            self._debug_service.debug('-- `{0}`'.format(command))
             if command.startswith('--') or \
                command == '\n':
                 #don't execute comments or blank lines
@@ -198,12 +200,11 @@ class SQLTable(Database):
             schema_name
     ):
         '''basic test for table existing'''
-        debug_str = '-- test_table_exists({table_name}, {schema_name})'.\
-            format(
-                table_name=table_name,
-                schema_name=schema_name
-            )
-        self._debug_service.message(debug_str, 'INFO')
+        self._debug_service.info(
+            '-- test_table_exists(' + \
+            '\r\ttable_name={0},'.format(table_name) + \
+            '\r\tschema_name={0})'.format(schema_name)
+        )
 
         exists_query = ''
         exists_result = False #TODO: remove?
@@ -218,19 +219,17 @@ class SQLTable(Database):
                 'unsupported table type: ' + str(self.table_type),
                 table_name
             )
-        self._debug_service.message(exists_query, 'DEBUG')
+        self._debug_service.debug(exists_query)
 
         try:
             exists_result = self._direct_query(exists_query)
         except Exception as error_msg:
-            error_str = '-- EXCEPTION query failed: ' + \
-                '{error_msg} on {table_type} with {query}'.\
-                format(
-                    error_msg=str(error_msg),
-                    table_type=str(self.table_type),
-                    query=exists_query
-                )
-            self._debug_service.message(error_str, 'ERROR')
+            self._debug_service.error(
+                'EXCEPTION query failed:' + \
+                '\r\terror_msg={0},'.format(str(error_msg)) + \
+                '\r\ttable_type={0},'.format(str(self.table_type)) + \
+                '\r\tquery={0}'.format(exists_query)
+            )
             raise error_msg
 
         if len(exists_result) != 1:
