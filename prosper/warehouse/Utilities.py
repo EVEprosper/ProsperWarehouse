@@ -16,8 +16,9 @@ def get_config_values(
         logger=None
 ):
     '''parses standardized config object and returns vals, or defaults'''
-    logger.info(
-        '----get_config_values: Parsing config for: {key_name}'.format(key_name=key_name))
+    if logger:
+        logger.info(
+            '----get_config_values: Parsing config for: {key_name}'.format(key_name=key_name))
     connection_values = {}
     connection_values['schema'] = config_object.get(key_name, 'db_schema')
     connection_values['host']   = config_object.get(key_name, 'db_host')
@@ -33,7 +34,8 @@ def get_config_values(
            bool(connection_values['table'])  and \
            bool(connection_values['port'])):
         #if (ANY) blank, use defaults
-        logger.info('--USING DEFAULT TABLE CONNECTION RULES--')
+        if logger:
+            logger.info('--USING DEFAULT TABLE CONNECTION RULES--')
         connection_values['schema'] = config_object.get('default', 'db_schema')
         connection_values['host']   = config_object.get('default', 'db_host')
         connection_values['user']   = config_object.get('default', 'db_user')
@@ -41,7 +43,8 @@ def get_config_values(
         connection_values['port']   = int(config_object.get('default', 'db_port'))
         connection_values['table']  = key_name
 
-    logger.debug(str(connection_values))
+    if logger:
+        logger.debug(str(connection_values))
     return connection_values
 
 ## TODO: UTILTIES ##
