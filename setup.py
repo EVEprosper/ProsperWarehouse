@@ -33,12 +33,13 @@ setup(
     keywords='prosper eveonline api database',
     packages=hack_find_packages('prosper'),
     data_files=[
+        #TODO: license + README
         ('SQL', include_all_subfiles('SQL')),
         ('docs', include_all_subfiles('docs'))
     ],
     package_data={
         'prosper':[
-            'table_configs/table_config.ini'
+            'table_configs/table_config.cfg'
         ]
     },
     install_requires=[
