@@ -25,7 +25,7 @@ def hack_find_packages(include_str):
 
 setup(
     name='ProsperWarehouse',
-    version='0.0.1',
+    version='0.0.2',
     license='MIT',
     classifiers=[
         'Programming Language :: Python :: 3.5'
