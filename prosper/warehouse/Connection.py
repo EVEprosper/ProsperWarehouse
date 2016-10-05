@@ -35,14 +35,14 @@ class Database(metaclass=abc.ABCMeta):
         '''basic info about all databases'''
         self._debug_service = LoggerDebugger(debug, logger)
 
-        self._debug_service.info(
+        self._logger.info(
             'Database __init__(' + \
             '\r\tdatasouce_name={0},'.format(datasource_name) + \
             '\r\tdebug={0},'.format(str(debug)) + \
             '\r\tlogger={0})'.format(str(logger))
         )
 
-        self._debug_service.debug('-- Global Setup')
+        self._logger.debug('-- Global Setup')
 
         self.datasource_name = datasource_name
         self._debug = debug
@@ -55,13 +55,13 @@ class Database(metaclass=abc.ABCMeta):
         self.all_keys.append(self.index_key)
         self.all_keys.extend(self.primary_keys)
         self.all_keys.extend(self.data_keys)
-        self._debug_service.info('--DATABASE: got keys from config')
+        self._logger.info('--DATABASE: got keys from config')
 
         self.table_type = self._define_table_type()
         try:
             self.test_table()
         except Exception as error_msg:
-            self._debug_service.error(
+            self._logger.error(
                 'EXCEPTION: test_table failed' + \
                 '\r\terror_msg={0}'.format(str(error_msg))
             )
@@ -137,7 +137,7 @@ class SQLTable(Database):
     def __init__(self, datasource_name, debug=False, logger=None):
         '''Traditional SQL-style hook setup'''
         self._debug_service = LoggerDebugger(debug, logger)
-        self._debug_service.info('SQLTable __init__()')
+        self._logger.info('SQLTable __init__()')
         self._connection,self._cursor = self.get_connection()
         self.table_name, self.schema_name = self._set_info()
         super().__init__(datasource_name, debug, logger)
@@ -155,7 +155,7 @@ class SQLTable(Database):
     def _direct_query(self, query_str):
         '''direct query for SQL tables'''
         #TODO: if/else check for every query seems wasteful, rework?
-        self._debug_service.info('--_direct_query')
+        self._logger.info('--_direct_query')
 
         #FIXME vvv do different coonections need different execute/fetch cmds?
         if self.table_type == TableType.MySQL:
@@ -181,10 +181,10 @@ class SQLTable(Database):
 
     def _create_table(self, full_create_string):
         '''handles executing table-create query'''
-        self._debug_service.info('--_create_table')
+        self._logger.info('--_create_table')
         command_list = full_create_string.split(';')
         for command in command_list:
-            self._debug_service.debug('-- `{0}`'.format(command))
+            self._logger.debug('-- `{0}`'.format(command))
             if command.startswith('--') or \
                command == '\n':
                 #don't execute comments or blank lines
@@ -200,7 +200,7 @@ class SQLTable(Database):
             schema_name
     ):
         '''basic test for table existing'''
-        self._debug_service.info(
+        self._logger.info(
             '-- test_table_exists(' + \
             '\r\ttable_name={0},'.format(table_name) + \
             '\r\tschema_name={0})'.format(schema_name)
@@ -219,12 +219,12 @@ class SQLTable(Database):
                 'unsupported table type: ' + str(self.table_type),
                 table_name
             )
-        self._debug_service.debug(exists_query)
+        self._logger.debug(exists_query)
 
         try:
             exists_result = self._direct_query(exists_query)
         except Exception as error_msg:
-            self._debug_service.error(
+            self._logger.error(
                 'EXCEPTION query failed:' + \
                 '\r\terror_msg={0},'.format(str(error_msg)) + \
                 '\r\ttable_type={0},'.format(str(self.table_type)) + \
@@ -238,7 +238,7 @@ class SQLTable(Database):
                     schema_name=schema_name,
                     table_name =table_name
                 )
-            self._debug_service.warning(
+            self._logger.warning(
                 '-- WARNING: Table not found.  Attempting to create' + \
                 '\r\ttable_name={0}.{1}'.format(schema_name, table_name)
             )
@@ -422,7 +422,7 @@ class SQLTable(Database):
 
     def put_data(self, payload):
         '''tests and pushes data to datastore'''
-        self._debug_service.message('put_data()', 'INFO')
+        self._logger.message('put_data()', 'INFO')
         if not isinstance(payload, pandas.DataFrame):
             raise NotImplementedError(
                 'put_data() requires Pandas.DataFrame.  No conversion implemented'
