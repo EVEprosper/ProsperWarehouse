@@ -281,7 +281,7 @@ if __name__ == '__main__':
         )
     DEBUG_LOGGER.log(10, '**STARTING TEST RUN**')
 
-    CONNECTION_VALUES = table_utils.get_config_values(config, ME, DEBUG)
+    #CONNECTION_VALUES = table_utils.get_config_values(config, ME)
     SAMPLE_DATA_FRAME = build_sample_dataframe(10)
     TEST_OBJECT = crest_markethistory(
         CONNECTION_VALUES['table'],

@@ -2,6 +2,9 @@
 
 import abc
 import importlib.util
+import logging
+DEFAULT_LOGGER = logging.getLogger('NULL').addHandler(logging.NullHandler())
+
 #import configparser
 
 from plumbum import local
@@ -10,6 +13,9 @@ import pandas
 import prosper.warehouse.Utilities as table_utils #TODO, required?
 from prosper.common.utilities import LoggerDebugger
 #from prosper.common.utilities import get_config
+
+#use NullHandler to avoid "NoneType is not Scriptable" exceptions
+
 class TableType:
     '''enumeration for tabletypes'''
     MySQL = 'MySQL'
@@ -31,10 +37,10 @@ class Database(metaclass=abc.ABCMeta):
     _debug = False
     _logger = None
     _debug_service = None
-    def __init__(self, datasource_name, debug=False, logger=None):
+    def __init__(self, datasource_name, debug=False, loging_handle=DEFAULT_LOGGER):
         '''basic info about all databases'''
-        self._debug_service = LoggerDebugger(debug, logger)
-
+        self._debug_service = LoggerDebugger(debug, loging_handle)
+        self._logger = loging_handle
         self._logger.info(
             'Database __init__(' + \
             '\r\tdatasouce_name={0},'.format(datasource_name) + \
@@ -134,9 +140,10 @@ class Database(metaclass=abc.ABCMeta):
 class SQLTable(Database):
     '''child class for handling TimeSeries databases'''
 
-    def __init__(self, datasource_name, debug=False, logger=None):
+    def __init__(self, datasource_name, debug=False, loging_handle=DEFAULT_LOGGER):
         '''Traditional SQL-style hook setup'''
-        self._debug_service = LoggerDebugger(debug, logger)
+        self._debug_service = LoggerDebugger(debug, loging_handle)
+        self._logger = loging_handle
         self._logger.info('SQLTable __init__()')
         self._connection,self._cursor = self.get_connection()
         self.table_name, self.schema_name = self._set_info()

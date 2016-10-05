@@ -260,11 +260,11 @@ if __name__ == '__main__':
         'debug_snapshot_evecentral',
         HERE,
         None,
-        'DEBUG'
+        #'DEBUG'
         )
     DEBUG_LOGGER.log(10, '**STARTING TEST RUN**')
-    CONNECTION_VALUES = table_utils.get_config_values(config, ME, DEBUG)
-    print(CONNECTION_VALUES)
+    #CONNECTION_VALUES = table_utils.get_config_values(config, ME)
+    #print(CONNECTION_VALUES)
     SAMPLE_DATA_FRAME = build_sample_dataframe(2, 12)
     TEST_OBJECT = snapshot_evecentral(
         CONNECTION_VALUES['table'],
