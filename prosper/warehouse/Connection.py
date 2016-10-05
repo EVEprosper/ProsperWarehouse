@@ -34,10 +34,8 @@ class Database(metaclass=abc.ABCMeta):
     '''parent class for holding database connection info'''
     _debug = False
     _logger = None
-    _debug_service = None
     def __init__(self, datasource_name, debug=False, loging_handle=DEFAULT_LOGGER):
         '''basic info about all databases'''
-        self._debug_service = LoggerDebugger(debug, loging_handle)
         self._debug = debug
         self._logger = loging_handle
         self._logger.info(
@@ -133,13 +131,11 @@ class Database(metaclass=abc.ABCMeta):
         '''get the latest instance of a filter to avoid overwrites'''
         pass
 
-
 class SQLTable(Database):
     '''child class for handling TimeSeries databases'''
 
     def __init__(self, datasource_name, debug=False, loging_handle=DEFAULT_LOGGER):
         '''Traditional SQL-style hook setup'''
-        self._debug_service = LoggerDebugger(debug, loging_handle)
         self._logger = loging_handle
         self._logger.info('SQLTable __init__()')
         self._connection,self._cursor = self.get_connection()
