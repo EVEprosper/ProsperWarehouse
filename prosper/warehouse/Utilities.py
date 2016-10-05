@@ -2,6 +2,9 @@
 
 import datetime
 import re
+import logging
+#use NullHandler to avoid "NoneType is not Scriptable" exceptions
+DEFAULT_LOGGER = logging.getLogger('NULL').addHandler(logging.NullHandler())
 
 ## TODO: UTILTIES ##
 def bool_can_write(DatabaseClass):
@@ -13,12 +16,10 @@ def get_config_values(
         config_object,
         key_name,
         debug=False,
-        logger=None
+        logger=DEFAULT_LOGGER
 ):
     '''parses standardized config object and returns vals, or defaults'''
-    if logger:
-        logger.info(
-            '----get_config_values: Parsing config for: {key_name}'.format(key_name=key_name))
+    logger.info('----get_config_values: Parsing config for: {key_name}'.format(key_name=key_name))
     connection_values = {}
     connection_values['schema'] = config_object.get(key_name, 'db_schema')
     connection_values['host']   = config_object.get(key_name, 'db_host')
@@ -34,8 +35,7 @@ def get_config_values(
            bool(connection_values['table'])  and \
            bool(connection_values['port'])):
         #if (ANY) blank, use defaults
-        if logger:
-            logger.info('--USING DEFAULT TABLE CONNECTION RULES--')
+        logger.info('--USING DEFAULT TABLE CONNECTION RULES--')
         connection_values['schema'] = config_object.get('default', 'db_schema')
         connection_values['host']   = config_object.get('default', 'db_host')
         connection_values['user']   = config_object.get('default', 'db_user')
@@ -43,8 +43,7 @@ def get_config_values(
         connection_values['port']   = int(config_object.get('default', 'db_port'))
         connection_values['table']  = key_name
 
-    if logger:
-        logger.debug(str(connection_values))
+    #logger.debug(str(connection_values))
     return connection_values
 
 ## TODO: UTILTIES ##
@@ -52,7 +51,7 @@ def bool_test_headers(
         existing_headers,
         defined_headers,
         debug=False,
-        logger=None
+        logger=DEFAULT_LOGGER
 ):
     '''tests if existing_headers == defined_headers'''
     return_bool = False
@@ -83,10 +82,9 @@ def bool_test_headers(
                     if orphan_list else ''
             )
 
-        if logger:
-            logger.ERROR(error_msg)
-
+        logger.ERROR(error_msg)
         return error_msg
+
     else:
         return_bool = True
 
