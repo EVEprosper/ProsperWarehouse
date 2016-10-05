@@ -86,7 +86,7 @@ class snapshot_evecentral(Connection.SQLTable):
     def get_connection(self):
         '''get con/cur for db connections'''
         self._logger.info('snapshot_evecentral.get_connection()')
-        self._logger.debug(str(CONNECTION_VALUES))
+        #self._logger.debug(str(CONNECTION_VALUES))
         #FIXME vvv try/exception
         tmp_connection = mysql.connector.connect(
             user    =CONNECTION_VALUES['user'],
