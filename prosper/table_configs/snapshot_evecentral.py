@@ -269,7 +269,7 @@ if __name__ == '__main__':
     TEST_OBJECT = snapshot_evecentral(
         CONNECTION_VALUES['table'],
         debug=DEBUG,
-        logger=DEBUG_LOGGER
+        loging_handle=DEBUG_LOGGER
     )
     TEST_OBJECT.put_data(SAMPLE_DATA_FRAME)
     TEST_DATA = TEST_OBJECT.get_data(

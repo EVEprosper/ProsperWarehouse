@@ -3,9 +3,8 @@
 import abc
 import importlib.util
 import logging
+#use NullHandler to avoid "NoneType is not Scriptable" exceptions
 DEFAULT_LOGGER = logging.getLogger('NULL').addHandler(logging.NullHandler())
-
-#import configparser
 
 from plumbum import local
 import pandas
@@ -14,7 +13,6 @@ import prosper.warehouse.Utilities as table_utils #TODO, required?
 from prosper.common.utilities import LoggerDebugger
 #from prosper.common.utilities import get_config
 
-#use NullHandler to avoid "NoneType is not Scriptable" exceptions
 
 class TableType:
     '''enumeration for tabletypes'''
@@ -40,19 +38,18 @@ class Database(metaclass=abc.ABCMeta):
     def __init__(self, datasource_name, debug=False, loging_handle=DEFAULT_LOGGER):
         '''basic info about all databases'''
         self._debug_service = LoggerDebugger(debug, loging_handle)
+        self._debug = debug
         self._logger = loging_handle
         self._logger.info(
             'Database __init__(' + \
             '\r\tdatasouce_name={0},'.format(datasource_name) + \
             '\r\tdebug={0},'.format(str(debug)) + \
-            '\r\tlogger={0})'.format(str(logger))
+            '\r\tlogger={0})'.format(str(loging_handle))
         )
 
         self._logger.debug('-- Global Setup')
 
         self.datasource_name = datasource_name
-        self._debug = debug
-        self._logger= logger
         self.local_path = self.set_local_path()
 
         self.index_key = None
@@ -147,7 +144,7 @@ class SQLTable(Database):
         self._logger.info('SQLTable __init__()')
         self._connection,self._cursor = self.get_connection()
         self.table_name, self.schema_name = self._set_info()
-        super().__init__(datasource_name, debug, logger)
+        super().__init__(datasource_name, debug, loging_handle)
 
     @abc.abstractmethod
     def get_connection(self):
@@ -429,7 +426,7 @@ class SQLTable(Database):
 
     def put_data(self, payload):
         '''tests and pushes data to datastore'''
-        self._logger.message('put_data()', 'INFO')
+        self._logger.info('put_data()')
         if not isinstance(payload, pandas.DataFrame):
             raise NotImplementedError(
                 'put_data() requires Pandas.DataFrame.  No conversion implemented'

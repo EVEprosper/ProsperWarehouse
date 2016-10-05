@@ -286,7 +286,7 @@ if __name__ == '__main__':
     TEST_OBJECT = crest_markethistory(
         CONNECTION_VALUES['table'],
         debug=DEBUG,
-        logger=DEBUG_LOGGER
+        loging_handle=DEBUG_LOGGER
     )
     TEST_OBJECT.put_data(SAMPLE_DATA_FRAME)
     TEST_OBJECT.latest_entry(
