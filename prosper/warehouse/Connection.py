@@ -238,33 +238,25 @@ class SQLTable(Database):
                     schema_name=schema_name,
                     table_name =table_name
                 )
-            self._debug_service.message(warning_str, 'WARNING')
+            self._debug_service.warning(
+                '-- WARNING: Table not found.  Attempting to create' + \
+                '\r\ttable_name={0}.{1}'.format(schema_name, table_name)
+            )
             try:
                 self._create_table(self.get_table_create_string())
             except Exception as error_msg:
-                error_str = '-- EXCEPTION: Unable to create table: ' + \
-                    '{error_msg} on {table_type} with {create_table_str}'.\
-                    format(
-                        error_msg=str(error_msg),
-                        table_type=str(self.table_type),
-                        create_table_str=self.get_table_create_string()
-                    )
-                self._debug_service.message(error_str, 'ERROR')
+                self._logger.error(
+                    'EXCEPTION: Unable to create table' + \
+                    '\r\texception={0}'.format(str(error_msg)) + \
+                    '\r\ttable_name={0}.{1}'.format(schema_name, table_name) + \
+                    '\r\ttable_type={0}'.format(self.table_type) + \
+                    '\r\tcreate_table_string={0}'.format(self.get_table_create_string())
+                )
                 raise error_msg
 
-            debug_str = '-- {schema_name}.{table_name} CREATED'.\
-                format(
-                    schema_name=schema_name,
-                    table_name =table_name
-                )
-            self._debug_service.message(debug_str, 'INFO')
+            self._logger.info('-- Created Table: {0}.{1}'.format(schema_name, table_name))
         else:
-            debug_str = '-- TABLE {schema_name}.{table_name} EXISTS'.\
-                format(
-                    schema_name=schema_name,
-                    table_name =table_name
-                )
-            self._debug_service.message(debug_str, 'INFO')
+            self._logger.info('-- Table Already Exists: {0}.{1}'.format(schema_name, table_name))
 
     def test_table_headers(
             self,
@@ -274,13 +266,12 @@ class SQLTable(Database):
 
     ):
         '''test if headers are correctly covered by cfg'''
-        debug_str = '-- test_table_headers({table_name}, {schema_name}, {defined_headers})'.\
-            format(
-                table_name=table_name,
-                schema_name=schema_name,
-                defined_headers=defined_headers
-            )
-        self._debug_service.message(debug_str, 'INFO')
+        self._logger.info(
+            'test_table_headers(' + \
+            '\r\ttable_name={0}'.format(table_name) + \
+            '\r\tschema_name={0}'.format(schema_name) + \
+            '\r\tdefined_headers={0}'.format(defined_headers)
+        )
 
         header_query = ''
         if self.table_type == TableType.MySQL:
@@ -298,37 +289,32 @@ class SQLTable(Database):
                 'unsupported table type: ' + str(self.table_type),
                 table_name
             )
-        self._debug_service.message('-- header_query={0}'.format(header_query), 'DEBUG')
+        self._logger.debug('-- header_query={0}'.format(header_query))
 
         try:
             headers = self._direct_query(header_query)
         except Exception as error_msg:
-            error_str = '-- EXCEPTION query failed: ' + \
-                '{error_msg} on {table_type} with {query}'.\
-                format(
-                    error_msg=str(error_msg),
-                    table_type=str(self.table_type),
-                    query=header_query
-                )
-            self._debug_service.message(error_str, 'ERROR')
+            self._logger.error(
+                'EXCEPTION: query failed:' + \
+                '\r\texception={0}'.format(str(error_msg)) + \
+                '\r\ttable_type={0}'.format(self.table_type) + \
+                '\r\tquery={0}'.format(header_query)
+            )
             raise error_msg
 
         #TODO mysql specific? vvv
         headers = table_utils.mysql_cleanup_results(headers)
-        self._debug_service.message('-- headers={0}'.format(','.join(headers)), 'DEBUG')
+        self._logger.debug('-- headers={0}'.format(','.join(headers)))
 
         #FIXME vvv bool_test_headers return values are weird
         if not table_utils.bool_test_headers(
                 headers,
                 defined_headers,
                 debug=self._debug,
-                logger=self._debug_service.get_logger() #TODO
+                logger=self._logger #TODO
         ):
-            error_msg = 'Table headers not equivalent'
-            self._debug_service.message(error_msg, 'ERROR')
-            raise MismatchedHeaders(
-                error_msg,
-                table_name)
+            self._logger.warning('WARNING: Table headers not equivalent')
+            raise MismatchedHeaders(error_msg, table_name)
 
     def get_data(
             self,
@@ -340,55 +326,52 @@ class SQLTable(Database):
             **kwargs
     ):
         '''process queries to fetch data'''
-        debug_str = 'get_data()' #TODO: parse args for log?
-        self._debug_service.message(debug_str, 'INFO')
+        self._logger.info('get_data()')
+        #TODO: self._logger.debug(args)
 
         #**kwargs: filter query keys
         #*args: data keys to return
         if kwargs_passthrough:
-            debug_str = '-- received override kwargs: {0}'.\
-                format(','.join(kwargs_passthrough.keys()))
-            self._debug_service.message(debug_str, 'DEBUG')
+            self._logger.debug(
+                '-- received override kwargs: {0}'.format(','.join(kwargs_passthrough.keys()))
+            )
             kwargs = kwargs_passthrough
 
         if isinstance(datetime_start, int):
             #assume "last x days"
-            debug_str = '-- received INT not DATETIME.  Converting'
-            self._debug_service.message(debug_str, 'DEBUG')
+            self._logger.debug('-- type(datetime_start)=INT.  Converting to datetime')
             datetime_start = table_utils.convert_days_to_datetime(datetime_start)
 
         ## Test argument contents before executing ##
         try:
             table_utils.test_kwargs_headers(self.primary_keys, kwargs)
         except Exception as error_msg:
-            error_str = 'EXCEPTION query/kwarg keys invalid ' + \
+            self._logger.error(
+                'EXCEPTION: query/kwarg keys invalid' + \
                 'exception={0}'.format(str(error_msg)) + \
                 'kwargs.keys={0} '.format(','.join(kwargs.keys())) + \
                 'primary_keys={0}'.format(','.join(self.primary_keys))
-            self._debug_service.message(error_str, 'ERROR')
-            raise InvalidQueryKeys(
-                error_msg,
-                self.table_name
-                )
+            )
+            raise InvalidQueryKeys(error_msg, self.table_name)
+
         try:
             table_utils.test_args_headers(self.data_keys, args)
         except Exception as error_msg:
-            error_str = 'EXCEPTION data/args keys invalid ' + \
+            self._logger.error(
+                'EXCEPTION data/args keys invalid ' + \
                 'exception={0}'.format(str(error_msg)) + \
                 'args={0} '.format(','.join(args)) + \
                 'data_keys={0}'.format(','.join(self.data_keys))
-            self._debug_service.message(error_str, 'ERROR')
-            raise InvalidDataKeys(
-                error_msg,
-                self.table_name
-                )
+            )
+            raise InvalidDataKeys(error_msg, self.table_name)
+
         if isinstance(limit, int):
             limit = abs(limit)
         elif limit is not None: #<--FIXME: logic is kinda shitty
             raise BadQueryModifier(
                 'limit badType: ' + str(type(limit)),
                 self.table_name
-                )
+            )
         #TODO: test datetimes
 
         ## Let's Build A Query! ##
@@ -429,19 +412,21 @@ class SQLTable(Database):
                 index_key=self.index_key,
                 limit_filter=limit_filter
             )
-        self._debug_service.message(query_string, 'DEBUG')
+        self._logger.debug(query_string)
         pandas_dataframe = pandas.read_sql(
             query_string,
             self._connection
             )
-        self._debug_service.message(str(pandas_dataframe), 'DEBUG')
+        self._logger.debug(str(pandas_dataframe))
         return pandas_dataframe
 
     def put_data(self, payload):
         '''tests and pushes data to datastore'''
         self._debug_service.message('put_data()', 'INFO')
         if not isinstance(payload, pandas.DataFrame):
-            raise NotImplementedError('put_data() requires Pandas.DataFrame.  No conversion implemented')
+            raise NotImplementedError(
+                'put_data() requires Pandas.DataFrame.  No conversion implemented'
+            )
 
         test_result = table_utils.bool_test_headers(
             list(payload.columns.values),
@@ -451,7 +436,7 @@ class SQLTable(Database):
         )
 
         if not payload.index.name:
-            self._debug_service.message('-- setting payload.index to {0}'.format(self.index_key))
+            self._logger.info('-- setting payload.index to {0}'.format(self.index_key))
             payload.set_index(
                 keys=self.index_key,
                 drop=True,
@@ -472,16 +457,12 @@ class SQLTable(Database):
                 if_exists='append'
             )
         except Exception as error_msg:
-            error_str = '''EXCEPTION unable to write to table:
-        exception={error_msg}'''.\
-                format(
-                    error_msg=str(error_msg)
-                )
-            self._debug_service(error_str, 'ERROR')
-            raise UnableToWriteToDatastore(
-                error_msg,
-                self.table_name
+            self._logger.error(
+                'EXCEPTION: Unable to write to table' + \
+                '\r\texception={0}'.format(str(error_msg)) + \
+                '\r\ttable_name={0}.{1}'.format(self.schema_name, self.table_name)
             )
+            raise UnableToWriteToDatastore(error_msg, self.table_name)
 
     def __del__(self):
         '''release connection/cursor'''
@@ -499,10 +480,10 @@ class ConnectionException(Exception):
 
     def __str__(self):
         error_msg = 'CONNECTION EXCEPTION: {tablename}-{message}'.\
-        format(
-            tablename=self.tablename,
-            message=self.message
-        )
+            format(
+                tablename=self.tablename,
+                message=self.message
+            )
         return error_msg
 
 class CreateTableError(ConnectionException):
