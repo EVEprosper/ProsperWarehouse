@@ -51,6 +51,7 @@ setup(
         'python-dateutil==2.5.3',
         'pytz==2016.6.1',
         'six==1.10.0',
+        'requests==2.11.1'
     ],
     dependency_links=[
         'https://github.com/EVEprosper/ProsperWarehouse.git#egg=ProsperWarehouse' #not quite right
