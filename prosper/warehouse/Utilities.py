@@ -4,7 +4,8 @@ import datetime
 import re
 import logging
 #use NullHandler to avoid "NoneType is not Scriptable" exceptions
-DEFAULT_LOGGER = logging.getLogger('NULL').addHandler(logging.NullHandler())
+DEFAULT_LOGGER = logging.getLogger('NULL')
+DEFAULT_LOGGER.addHandler(logging.NullHandler())
 
 ## TODO: UTILTIES ##
 def bool_can_write(DatabaseClass):

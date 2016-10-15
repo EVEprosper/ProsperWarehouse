@@ -4,15 +4,13 @@ import abc
 import importlib.util
 import logging
 #use NullHandler to avoid "NoneType is not Scriptable" exceptions
-DEFAULT_LOGGER = logging.getLogger('NULL').addHandler(logging.NullHandler())
+DEFAULT_LOGGER = logging.getLogger('NULL')
+DEFAULT_LOGGER.addHandler(logging.NullHandler())
 
 from plumbum import local
 import pandas
 
 import prosper.warehouse.Utilities as table_utils #TODO, required?
-from prosper.common.utilities import LoggerDebugger
-#from prosper.common.utilities import get_config
-
 
 class TableType:
     '''enumeration for tabletypes'''

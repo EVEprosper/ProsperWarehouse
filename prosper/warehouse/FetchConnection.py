@@ -4,12 +4,13 @@ from os import path #FIXME: plumbum
 import importlib.util
 import logging
 #use NullHandler to avoid "NoneType is not Scriptable" exceptions
-DEFAULT_LOGGER = logging.getLogger('NULL').addHandler(logging.NullHandler())
+DEFAULT_LOGGER = logging.getLogger('NULL')
+DEFAULT_LOGGER.addHandler(logging.NullHandler())
 
 ## NOTE: importlib magic: http://www.blog.pythonlibrary.org/2016/05/27/python-201-an-intro-to-importlib/
 
 HERE = path.abspath(path.dirname(__file__))
-DEFAULT_TABLECONFIG_PATH = path.join(path.dirname(HERE),'table_configs')
+DEFAULT_TABLECONFIG_PATH = path.join(path.dirname(HERE), 'table_configs')
 DEBUG = False
 
 def fetch_data_source(
@@ -22,7 +23,7 @@ def fetch_data_source(
     '''importlib magic to fetch table connections'''
     if not datasource_name:
         #make 1 call: snapshot_evecentral.snapshot_evecentral
-        datasource_name=family_name
+        datasource_name = family_name
     #else: zkillboard.map_stats, zkillboard.item_stats...
     logger.debug(
         'fetch_data_source' + \

@@ -6,7 +6,8 @@ import pandas
 from plumbum import local
 import mysql.connector
 
-from prosper.common.utilities import get_config, create_logger
+from prosper.common.prosper_logging import create_logger
+from prosper.common.prosper_config import get_config
 import prosper.warehouse.Connection as Connection
 import prosper.warehouse.Utilities as table_utils
 
