@@ -25,7 +25,11 @@ def hack_find_packages(include_str):
 
 setup(
     name='ProsperWarehouse',
-    version='0.0.2',
+    author='John Purcell',
+    author_email='prospermarketshow@gmail.com',
+    url='https://github.com/EVEprosper/ProsperWarehouse',
+    download_url='https://github.com/EVEprosper/ProsperWarehouse/tarball/v0.0.3',
+    version='0.0.3',
     license='MIT',
     classifiers=[
         'Programming Language :: Python :: 3.5'
@@ -51,9 +55,10 @@ setup(
         'python-dateutil==2.5.3',
         'pytz==2016.6.1',
         'six==1.10.0',
-        'requests==2.11.1'
+        'requests==2.11.1',
+        'ProsperCommon==0.2.1'
     ],
     dependency_links=[
-        'https://github.com/EVEprosper/ProsperWarehouse.git#egg=ProsperWarehouse' #not quite right
+        'https://pypi.fury.io/jyd5j4yse83c9UW64tP7/lockefox/ProsperCommon/'
     ]
 )
