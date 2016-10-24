@@ -1,10 +1,10 @@
+--extra-index-url https://pypi.fury.io/jyd5j4yse83c9UW64tP7/lockefox/
 configparser==3.5.0
 mysql-connector==2.1.4
 numpy==1.11.1
 pandas==0.18.1
 plumbum==1.6.2
--e git+git@github.com:EVEprosper/ProsperCommon.git@14094236196a09e1379c4123cc7db84afe9ab839#egg=ProsperCommon
--e git+git@github.com:EVEprosper/ProsperWarehouse.git@c37e1c5b4bb29bd7a6c64ffae1e8aa790f061e96#egg=ProsperWarehouse
+ProsperCommon>=0.2.0
 python-dateutil==2.5.3
 pytz==2016.6.1
 requests==2.11.1
