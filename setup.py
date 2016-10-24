@@ -56,7 +56,7 @@ setup(
         'pytz==2016.6.1',
         'six==1.10.0',
         'requests==2.11.1',
-        'ProsperCommon==0.2.1'
+        #'ProsperCommon==0.2.1'
     ],
     dependency_links=[
         'https://pypi.fury.io/jyd5j4yse83c9UW64tP7/lockefox/ProsperCommon/'
