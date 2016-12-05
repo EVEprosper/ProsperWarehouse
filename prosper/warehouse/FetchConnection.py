@@ -26,11 +26,11 @@ def fetch_data_source(
         datasource_name = family_name
     #else: zkillboard.map_stats, zkillboard.item_stats...
     logger.debug(
-        'fetch_data_source' + \
-        '\r\family_name={0}'.format(family_name) + \
-        '\r\tdatasource_name={0}'.format(datasource_name) + \
-        '\r\ttable_config_path={0}'.format(table_config_path) + \
-        '\r\tdebug={0}'.format(str(debug)) + \
+        'fetch_data_source' +
+        '\r\family_name={0}'.format(family_name) +
+        '\r\tdatasource_name={0}'.format(datasource_name) +
+        '\r\ttable_config_path={0}'.format(table_config_path) +
+        '\r\tdebug={0}'.format(str(debug)) +
         '\r\tlogger={0}'.format(str(logger))
     )
 
@@ -41,9 +41,9 @@ def fetch_data_source(
     import_spec = importlib.util.spec_from_file_location(datasource_name, module_path)
     if import_spec is None:
         logger.error(
-            'EXCEPTION: Unable to find module in path' + \
-            '\r\ttable_config_path={0}'.format(table_config_path) + \
-            '\r\tfamily_name={0}'.format(family_name) + \
+            'EXCEPTION: Unable to find module in path' +
+            '\r\ttable_config_path={0}'.format(table_config_path) +
+            '\r\tfamily_name={0}'.format(family_name) +
             '\r\tdatasource_name={0}'.format(datasource_name)
         )
         raise FindConnectionModuleError(
@@ -63,10 +63,10 @@ def fetch_data_source(
         )
     except Exception as e_msg:
         logger.exception(
-            'EXCEPTION: Unable to load datasource class:' + \
-            '\r\texception={0}'.format(str(e_msg)) + \
-            '\r\tsource_dir={0}'.format(table_config_path) + \
-            '\r\tmodule={0}.{1}'.format(family_name, datasource_name)
+            'EXCEPTION: Unable to load datasource class:' +
+            '\r\tsource_dir={0}'.format(table_config_path) +
+            '\r\tmodule={0}.{1}'.format(family_name, datasource_name),
+            exc_info=True
         )
 
         raise LoadConnectionModuleError(

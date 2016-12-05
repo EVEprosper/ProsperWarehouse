@@ -37,9 +37,9 @@ class Database(metaclass=abc.ABCMeta):
         self._debug = debug
         self._logger = loging_handle
         self._logger.info(
-            'Database __init__(' + \
-            '\r\tdatasouce_name={0},'.format(datasource_name) + \
-            '\r\tdebug={0},'.format(str(debug)) + \
+            'Database __init__(' +
+            '\r\tdatasouce_name={0},'.format(datasource_name) +
+            '\r\tdebug={0},'.format(str(debug)) +
             '\r\tlogger={0})'.format(str(loging_handle))
         )
 
@@ -61,8 +61,8 @@ class Database(metaclass=abc.ABCMeta):
             self.test_table()
         except Exception as error_msg:
             self._logger.error(
-                'EXCEPTION: test_table failed' + \
-                '\r\terror_msg={0}'.format(str(error_msg))
+                'EXCEPTION: test_table failed',
+                exc_info=True
             )
             raise error_msg
 
@@ -199,8 +199,8 @@ class SQLTable(Database):
     ):
         '''basic test for table existing'''
         self._logger.info(
-            '-- test_table_exists(' + \
-            '\r\ttable_name={0},'.format(table_name) + \
+            '-- test_table_exists(' +
+            '\r\ttable_name={0},'.format(table_name) +
             '\r\tschema_name={0})'.format(schema_name)
         )
 
@@ -223,10 +223,10 @@ class SQLTable(Database):
             exists_result = self._direct_query(exists_query)
         except Exception as error_msg:
             self._logger.error(
-                'EXCEPTION query failed:' + \
-                '\r\terror_msg={0},'.format(str(error_msg)) + \
-                '\r\ttable_type={0},'.format(str(self.table_type)) + \
-                '\r\tquery={0}'.format(exists_query)
+                'EXCEPTION query failed:' +
+                '\r\ttable_type={0},'.format(str(self.table_type)) +
+                '\r\tquery={0}'.format(exists_query),
+                exc_info=True
             )
             raise error_msg
 
@@ -244,11 +244,11 @@ class SQLTable(Database):
                 self._create_table(self.get_table_create_string())
             except Exception as error_msg:
                 self._logger.error(
-                    'EXCEPTION: Unable to create table' + \
-                    '\r\texception={0}'.format(str(error_msg)) + \
-                    '\r\ttable_name={0}.{1}'.format(schema_name, table_name) + \
-                    '\r\ttable_type={0}'.format(self.table_type) + \
-                    '\r\tcreate_table_string={0}'.format(self.get_table_create_string())
+                    'EXCEPTION: Unable to create table' +
+                    '\r\ttable_name={0}.{1}'.format(schema_name, table_name) +
+                    '\r\ttable_type={0}'.format(self.table_type) +
+                    '\r\tcreate_table_string={0}'.format(self.get_table_create_string()),
+                    exc_info=True
                 )
                 raise error_msg
 
@@ -265,9 +265,9 @@ class SQLTable(Database):
     ):
         '''test if headers are correctly covered by cfg'''
         self._logger.info(
-            'test_table_headers(' + \
-            '\r\ttable_name={0}'.format(table_name) + \
-            '\r\tschema_name={0}'.format(schema_name) + \
+            'test_table_headers(' +
+            '\r\ttable_name={0}'.format(table_name) +
+            '\r\tschema_name={0}'.format(schema_name) +
             '\r\tdefined_headers={0}'.format(defined_headers)
         )
 
@@ -293,10 +293,10 @@ class SQLTable(Database):
             headers = self._direct_query(header_query)
         except Exception as error_msg:
             self._logger.error(
-                'EXCEPTION: query failed:' + \
-                '\r\texception={0}'.format(str(error_msg)) + \
-                '\r\ttable_type={0}'.format(self.table_type) + \
-                '\r\tquery={0}'.format(header_query)
+                'EXCEPTION: query failed:' +
+                '\r\ttable_type={0}'.format(self.table_type) +
+                '\r\tquery={0}'.format(header_query),
+                exc_info=True
             )
             raise error_msg
 
@@ -345,10 +345,10 @@ class SQLTable(Database):
             table_utils.test_kwargs_headers(self.primary_keys, kwargs)
         except Exception as error_msg:
             self._logger.error(
-                'EXCEPTION: query/kwarg keys invalid' + \
-                'exception={0}'.format(str(error_msg)) + \
-                'kwargs.keys={0} '.format(','.join(kwargs.keys())) + \
-                'primary_keys={0}'.format(','.join(self.primary_keys))
+                'EXCEPTION: query/kwarg keys invalid' +
+                'kwargs.keys={0} '.format(','.join(kwargs.keys())) +
+                'primary_keys={0}'.format(','.join(self.primary_keys)),
+                exc_info=True
             )
             raise InvalidQueryKeys(error_msg, self.table_name)
 
@@ -356,10 +356,10 @@ class SQLTable(Database):
             table_utils.test_args_headers(self.data_keys, args)
         except Exception as error_msg:
             self._logger.error(
-                'EXCEPTION data/args keys invalid ' + \
-                'exception={0}'.format(str(error_msg)) + \
-                'args={0} '.format(','.join(args)) + \
-                'data_keys={0}'.format(','.join(self.data_keys))
+                'EXCEPTION data/args keys invalid ' +
+                'args={0} '.format(','.join(args)) +
+                'data_keys={0}'.format(','.join(self.data_keys)),
+                exc_info=True
             )
             raise InvalidDataKeys(error_msg, self.table_name)
 
@@ -460,9 +460,9 @@ class SQLTable(Database):
             )
         except Exception as error_msg:
             self._logger.error(
-                'EXCEPTION: Unable to write to table' + \
-                '\r\texception={0}'.format(str(error_msg)) + \
-                '\r\ttable_name={0}.{1}'.format(self.schema_name, self.table_name)
+                'EXCEPTION: Unable to write to table' +
+                '\r\ttable_name={0}.{1}'.format(self.schema_name, self.table_name),
+                exc_info=True
             )
             raise UnableToWriteToDatastore(error_msg, self.table_name)
 

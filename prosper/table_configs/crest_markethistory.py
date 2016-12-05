@@ -68,17 +68,17 @@ class crest_markethistory(Connection.SQLTable):
         except KeyError as error_msg:
             self._logger.error(
                 'EXCEPTION: Keys missing' + \
-                '\r\texception={0}'.format(str(error_msg)) + \
-                '\r\tprimary_keys={0}'.format(','.join(tmp_primary_keys)) + \
-                '\r\tdata_keys={0}'.format(','.join(tmp_data_keys)) + \
-                '\r\tindex_key={0}'.format(self.index_key)
+                '\r\tprimary_keys={0}'.format(','.join(tmp_primary_keys)) +
+                '\r\tdata_keys={0}'.format(','.join(tmp_data_keys)) +
+                '\r\tindex_key={0}'.format(self.index_key),
+                exc_info=True
             )
             raise Connection.TableKeysMissing(error_msg, ME)
 
         self._logger.debug(
             'keys validated:' + \
-            '\r\tprimary_keys={0}'.format(','.join(tmp_primary_keys)) + \
-            '\r\tdata_keys={0}'.format(','.join(tmp_data_keys)) + \
+            '\r\tprimary_keys={0}'.format(','.join(tmp_primary_keys)) +
+            '\r\tdata_keys={0}'.format(','.join(tmp_data_keys)) +
             '\r\tindex_key={0}'.format(self.index_key)
         )
         return tmp_primary_keys, tmp_data_keys
@@ -116,9 +116,9 @@ class crest_markethistory(Connection.SQLTable):
             )
         except Exception as error_msg:
             self._logger.error(
-                'EXCEPTION: table does not exist, unable to fix:' + \
-                '\r\texception={0}'.format(str(error_msg)) + \
-                '\r\ttable={0}.{1}'.format(CONNECTION_VALUES['schema'], CONNECTION_VALUES['table'])
+                'EXCEPTION: table does not exist, unable to fix:' +
+                '\r\ttable={0}.{1}'.format(CONNECTION_VALUES['schema'],CONNECTION_VALUES['table']),
+                exc_info=True
             )
             raise error_msg
 
@@ -135,9 +135,9 @@ class crest_markethistory(Connection.SQLTable):
             )
         except Exception as error_msg:
             self._logger.error(
-                'EXCEPTION: table headers missmatch:' + \
-                '\r\texception={0}'.format(str(error_msg)) + \
-                '\r\ttable={0}.{1}'.format(CONNECTION_VALUES['schema'], CONNECTION_VALUES['table'])
+                'EXCEPTION: table headers missmatch:' +
+                '\r\ttable={0}.{1}'.format(CONNECTION_VALUES['schema'],CONNECTION_VALUES['table']),
+                exc_info=True
             )
             raise error_msg
 

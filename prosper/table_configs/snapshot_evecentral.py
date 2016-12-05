@@ -62,17 +62,17 @@ class snapshot_evecentral(Connection.SQLTable):
             self.index_key = config.get(ME, 'index_key') #FIXME: this is bad
         except KeyError as error_msg:
             self._logger.error(
-                'EXCEPTION: keys missing' + \
-                '\r\texception={0}'.format(str(error_msg)) + \
-                '\r\tprimary_keys={0}'.format(','.join(tmp_primary_keys)) + \
-                '\r\tdata_keys={0}'.format(','.join(tmp_data_keys)) + \
-                '\r\tindex_key={0}'.format(self.index_key)
+                'EXCEPTION: keys missing' +
+                '\r\tprimary_keys={0}'.format(','.join(tmp_primary_keys)) +
+                '\r\tdata_keys={0}'.format(','.join(tmp_data_keys)) +
+                '\r\tindex_key={0}'.format(self.index_key),
+                exc_info=True
             )
             raise Connection.TableKeysMissing(error_msg, ME)
 
         self._logger.debug(
-            '\r\tprimary_keys={0}'.format(','.join(tmp_primary_keys)) + \
-            '\r\tdata_keys={0}'.format(','.join(tmp_data_keys)) + \
+            '\r\tprimary_keys={0}'.format(','.join(tmp_primary_keys)) +
+            '\r\tdata_keys={0}'.format(','.join(tmp_data_keys)) +
             '\r\tindex_key={0}'.format(self.index_key)
         )
 
@@ -112,9 +112,9 @@ class snapshot_evecentral(Connection.SQLTable):
             )
         except Exception as error_msg:
             self._logger.error(
-                'EXCEPTION: Table does not exist, unable to fix' + \
-                '\r\texception={0}'.format(str(error_msg)) + \
-                '\r\ttable={0}.{1}'.format(CONNECTION_VALUES['schema'], CONNECTION_VALUES['table'])
+                'EXCEPTION: Table does not exist, unable to fix' +
+                '\r\ttable={0}.{1}'.format(CONNECTION_VALUES['schema'],CONNECTION_VALUES['table']),
+                exc_info=True
             )
             raise error_msg
 
@@ -130,9 +130,9 @@ class snapshot_evecentral(Connection.SQLTable):
             )
         except Exception as error_msg:
             self._logger.error(
-                'EXCEPTION: table headers missmatch' + \
-                '\r\texception={0}'.format(str(error_msg)) + \
-                '\r\ttable={0}.{1}'.format(CONNECTION_VALUES['schema'], CONNECTION_VALUES['table'])
+                'EXCEPTION: table headers missmatch' +
+                '\r\ttable={0}.{1}'.format(CONNECTION_VALUES['schema'],CONNECTION_VALUES['table']),
+                exc_info=True
             )
             raise error_msg
 
