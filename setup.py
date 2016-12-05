@@ -29,7 +29,7 @@ setup(
     author_email='prospermarketshow@gmail.com',
     url='https://github.com/EVEprosper/ProsperWarehouse',
     download_url='https://github.com/EVEprosper/ProsperWarehouse/tarball/v0.0.3',
-    version='0.0.3',
+    version='0.0.4',
     license='MIT',
     classifiers=[
         'Programming Language :: Python :: 3.5'
