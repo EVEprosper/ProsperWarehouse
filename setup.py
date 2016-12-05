@@ -80,6 +80,7 @@ setup(
     ],
     keywords='prosper eveonline api database',
     packages=hack_find_packages('prosper'),
+    include_package_data=True,
     #data_files=[
     #    #TODO: license + README
     #    #Can't use data_files with gemfury upload (need `bdist_wheel`)
