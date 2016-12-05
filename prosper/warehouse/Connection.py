@@ -394,8 +394,12 @@ class SQLTable(Database):
                 max_date_filter=max_date_filter
                 )
         query_specific_filter = table_utils.format_kwargs(kwargs)
+        query_keys = ''
+        if self.primary_keys[0]:
+            query_keys = ','.join(self.primary_keys) + ','  #for tables without query keys
+
         query_string = '''
-            SELECT {index_key},{query_keys},{query_header_string}
+            SELECT {index_key},{query_keys}{query_header_string}
             FROM {table_name}
             WHERE {query_general_filter}
             {query_specific_filter}
@@ -403,7 +407,7 @@ class SQLTable(Database):
             {limit_filter}'''.\
             format(
                 query_header_string=query_header_string,
-                query_keys=str(','.join(self.primary_keys)),
+                query_keys=query_keys,
                 table_name=self.table_name,
                 query_general_filter=query_general_filter,
                 query_specific_filter=query_specific_filter,

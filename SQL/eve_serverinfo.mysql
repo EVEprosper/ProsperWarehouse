@@ -2,6 +2,6 @@ DROP TABLE IF EXISTS `eve_serverinfo`;
 CREATE TABLE `eve_serverinfo` (
     `server_datetime`   DATETIME    NOT NULL,
     `onlinePlayers`     INT(7)      NOT NULL,
-    `serverOpen`        TINYINT     NOT NULL
+    `serverOpen`        TINYINT     NOT NULL,
     PRIMARY KEY (server_datetime))
-ENGINE=InnoDB DEFAULT CHARSET=latin1;
+ENGINE=InnoDB DEFAULT CHARSET=latin1
