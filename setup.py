@@ -90,7 +90,7 @@ class PyTest(TestCommand):
         exit(errno)
 
 __package_name__ = 'ProsperWarehouse'
-__version__ = get_version()
+__version__ = get_version('prosper.warehouse')
 
 setup(
     name=__package_name__,
