@@ -119,8 +119,9 @@ setup(
     install_requires=[
         'ProsperCommon~=0.5.0',  #--extra-index-url=https://repo.fury.io/lockefox/
         'jsonschema~=2.6.0',
-        'pymongo~=3.4.0'
-        'pandas~=0.19.2'
+        'pymongo~=3.4.0',
+        'pandas~=0.19.2',
+        'semantic_version~=2.6.0'
     ],
     tests_require=[
         'pytest~=3.0.0',
