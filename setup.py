@@ -3,8 +3,26 @@
 from os import path, listdir
 from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
+import importlib
 
 HERE = path.abspath(path.dirname(__file__))
+
+def get_version(package_name):
+    """find __version__ for making package
+
+    Args:
+        package_path (str): path to _version.py folder (abspath > relpath)
+
+    Returns:
+        (str) __version__ value
+
+    """
+    module = package_name + '._version'
+    package = importlib.import_module(module)
+
+    version = package.__version__
+
+    return version
 
 def hack_find_packages(include_str):
     """patches setuptools.find_packages issue
@@ -53,7 +71,11 @@ class PyTest(TestCommand):
 
     def initialize_options(self):
         TestCommand.initialize_options(self)
-        self.pytest_args = ['test']    #load defaults here
+        self.pytest_args = [
+            'tests',
+            '--cov=prosper/',
+            '--cov-report=term-missing'
+        ]    #load defaults here
 
     def run_tests(self):
         import shlex
@@ -67,13 +89,16 @@ class PyTest(TestCommand):
         errno = pytest.main(pytest_commands)
         exit(errno)
 
+__package_name__ = 'ProsperWarehouse'
+__version__ = get_version()
+
 setup(
-    name='ProsperWarehouse',
+    name=__package_name__,
     author='John Purcell',
     author_email='prospermarketshow@gmail.com',
-    url='https://github.com/EVEprosper/ProsperWarehouse',
-    download_url='https://github.com/EVEprosper/ProsperWarehouse/tarball/v0.0.3',
-    version='0.0.4',
+    url='https://github.com/EVEprosper/' + __package_name__,
+    download_url='https://github.com/EVEprosper/' + __package_name__ + '/tarball/v' + __version__,
+    version=__version__,
     license='MIT',
     classifiers=[
         'Programming Language :: Python :: 3.5'
@@ -81,27 +106,28 @@ setup(
     keywords='prosper eveonline api database',
     packages=hack_find_packages('prosper'),
     include_package_data=True,
-    #data_files=[
-    #    #TODO: license + README
-    #    #Can't use data_files with gemfury upload (need `bdist_wheel`)
-    #    ('SQL', include_all_subfiles('SQL')),
-    #    ('docs', include_all_subfiles('docs'))
-    #],
+    data_files=[
+        ('docs', include_all_subfiles('docs')),
+        ('tests', include_all_subfiles('tests'))
+    ],
     package_data={
         'prosper':[
-            'table_configs/table_config.cfg'
+            'warehouse/schemas/*',
+            'warehouse/warehouse.cfg'
         ]
     },
     install_requires=[
-        'configparser==3.5.0',
-        'mysql-connector==2.1.4',
-        'numpy==1.11.1',
-        'pandas==0.18.1',
-        'plumbum==1.6.2',
-        'python-dateutil==2.5.3',
-        'pytz==2016.6.1',
-        'six==1.10.0',
-        'requests==2.11.1',
-        'ProsperCommon==0.3.3'
-    ]
+        'ProsperCommon~=0.5.0',  #--extra-index-url=https://repo.fury.io/lockefox/
+        'jsonschema~=2.6.0',
+        'pymongo~=3.4.0'
+        'pandas~=0.19.2'
+    ],
+    tests_require=[
+        'pytest~=3.0.0',
+        'pytest_cov~=2.4.0',
+        'tinymongo~=0.1.7.dev0'
+    ],
+    cmdclass={
+        'test':PyTest
+    }
 )
