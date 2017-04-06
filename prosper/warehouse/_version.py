@@ -1,6 +1,6 @@
 """_version.py: version information for writing library"""
 INSTALLED = True
-try:
+try:    #pragma: no cover
     import semantic_version
 except ModuleNotFoundError:
     INSTALLED = False
@@ -23,7 +23,7 @@ def semantic_to_numeric(version_string):
 
     """
     if not INSTALLED:
-        return -1
+        return -1.0
     sem_v = semantic_version.Version(version_string)
 
     number_string = '{major:04d}{minor:04d}{patch:04d}'.format(

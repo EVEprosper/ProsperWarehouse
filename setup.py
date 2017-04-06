@@ -126,7 +126,7 @@ setup(
     tests_require=[
         'pytest~=3.0.0',
         'pytest_cov~=2.4.0',
-        'tinymongo~=0.1.7.dev0'
+        #'tinymongo~=0.1.7.dev0'
     ],
     cmdclass={
         'test':PyTest

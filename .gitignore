@@ -92,3 +92,4 @@ venv*/
 # Untracked project files
 .log
 *_local.cfg
+cache/
