@@ -1,0 +1,25 @@
+{
+	"type": "object",
+	"properties":{
+		"date": {"type":"string", "format":"date-time"},
+		"type_id": {"type":"integer"},
+		"region_id": {"type":"integer"},
+		"orders": {"type":"integer"},
+		"volume": {"type":"integer"},
+		"lowest": {"type":"number"},
+		"average": {"type":"number"},
+		"highest": {"type":"number"},
+		"metadata":{
+			"type": "object",
+			"properties":{
+				"source": {"type":"string"},
+				"version": {"type":"string"},
+				"prosperwarehouse":{"type":"string"},
+				"date_collected": {"type":"string", "format":"date-time"}
+			},
+			"required": ["source", "version", "prosperwarehouse", "date_collected"],
+			"additionalProperties": false
+		},
+		"required": ["metadata", "date", "type_id", "region_id"]
+	}
+}
