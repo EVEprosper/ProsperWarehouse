@@ -83,7 +83,7 @@
 			"required": ["hash", "npc"],
 			"additionalProperties": false
 		},
-		"required": ["killID", "solarSystemID", "killTime", "victim", "attackers", "items", "position", "zkb"],
+		"required": ["killID", "solarSystemID", "killTime", "victim", "attackers", "items"],
 		"additionalProperties": false
 	}
 }

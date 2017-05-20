@@ -1,0 +1,201 @@
+{
+  "properties": {
+    "attackers": {
+      "items": {
+        "properties": {
+          "alliance_id": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "character_id": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "corporation_id": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "damage_done": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "faction_id": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "final_blow": {
+            "type": "boolean"
+          },
+          "security_status": {
+            "format": "float",
+            "type": "number"
+          },
+          "ship_type_id": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "weapon_type_id": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "security_status",
+          "final_blow",
+          "damage_done"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "killmail_id": {
+      "format": "int32",
+      "type": "integer"
+    },
+    "killmail_time": {
+      "format": "date-time",
+      "type": "string"
+    },
+    "moon_id": {
+      "format": "int32",
+      "type": "integer"
+    },
+    "solar_system_id": {
+      "format": "int32",
+      "type": "integer"
+    },
+    "victim": {
+      "properties": {
+        "alliance_id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "character_id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "corporation_id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "damage_taken": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "faction_id": {
+          "format": "int32",
+          "type": "integer"
+        },
+        "items": {
+          "items": {
+            "properties": {
+              "flag": {
+                "format": "int32",
+                "type": "integer"
+              },
+              "item_type_id": {
+                "format": "int32",
+                "type": "integer"
+              },
+              "items": {
+                "items": {
+                  "properties": {
+                    "flag": {
+                      "format": "int32",
+                      "type": "integer"
+                    },
+                    "item_type_id": {
+                      "format": "int32",
+                      "type": "integer"
+                    },
+                    "quantity_destroyed": {
+                      "format": "int64",
+                      "type": "integer"
+                    },
+                    "quantity_dropped": {
+                      "format": "int64",
+                      "type": "integer"
+                    },
+                    "singleton": {
+                      "format": "int32",
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "item_type_id",
+                    "singleton",
+                    "flag"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "quantity_destroyed": {
+                "format": "int64",
+                "type": "integer"
+              },
+              "quantity_dropped": {
+                "format": "int64",
+                "type": "integer"
+              },
+              "singleton": {
+                "format": "int32",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "item_type_id",
+              "singleton",
+              "flag"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "position": {
+          "properties": {
+            "x": {
+              "format": "float",
+              "type": "number"
+            },
+            "y": {
+              "format": "float",
+              "type": "number"
+            },
+            "z": {
+              "format": "float",
+              "type": "number"
+            }
+          },
+          "required": [
+            "x",
+            "y",
+            "z"
+          ],
+          "type": "object"
+        },
+        "ship_type_id": {
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "damage_taken",
+        "ship_type_id"
+      ],
+      "type": "object"
+    },
+    "war_id": {
+      "format": "int32",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "killmail_id",
+    "killmail_time",
+    "victim",
+    "attackers",
+    "solar_system_id"
+  ],
+  "type": "object"
+}
