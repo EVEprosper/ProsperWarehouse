@@ -1,1 +1,3 @@
-recursive-include SQL *.mysql
+recursive-include prosper/warehouse/schemas *.schema
+recursive-include docs/
+incldue prosper/warehouse/warehouse.cfg
