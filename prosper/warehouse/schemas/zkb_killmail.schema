@@ -1,0 +1,89 @@
+{
+	"type": "object",
+	"properties":{
+		"killID": {"type":"integer"},
+		"solarSystemID": {"type":"integer"},
+		"killTime": {"type":"string", "format":"date-time"},
+		"moonID": {"type":"integer"},
+		"victim":{
+			"type": "object",
+			"properties":{
+				"shipTypeID": {"type":"integer"},
+				"characterID": {"type":"integer"},
+				"characterName": {"type":"string"},
+				"corporationID": {"type":"integer"},
+				"corporationName": {"type":"string"},
+				"allianceID": {"type":"integer"},
+				"allianceName": {"type":"string"},
+				"factionID": {"type":"integer"},
+				"factionName": {"type":"string"},
+				"damageTaken": {"type":"integer"}		
+			},
+			"required": ["shipTypeID", "characterID", "corporationID", "allianceID", "factionID", "damageTaken"],
+			"additionalProperties": false
+		},
+		"attackers":{
+			"type": "array",
+			"items":{
+				"type": "object",
+				"properties":{
+					"characterID": {"type":"integer"}, 
+					"characterName": {"type":"string"}, 
+					"corporationID": {"type":"integer"}, 
+					"corporationName": {"type":"string"}, 
+					"allianceID": {"type":"integer"}, 
+					"allianceName": {"type":"string"}, 
+					"factionID": {"type":"integer"},
+					"factionName": {"type":"string"}, 
+					"securityStatus": {"type":"number"}, 
+					"damageDone": {"type":"integer"}, 
+					"finalBlow": {"type":"integer"}, 
+					"weaponTypeID": {"type":"integer"}, 
+					"shipTypeID": {"type":"integer"}
+				},
+				"required": ["characterID", "corporationID", "allianceID", "factionID", "damageDone", "finalBlow", "weaponTypeID", "shipTypeID"],
+				"additionalProperties": false
+			}
+
+		},
+		"items":{
+			"type": "array",
+			"items":{
+				"type": "object",
+				"properties":{
+					"typeID": {"type":"integer"},
+					"flag": {"type":"integer"},
+					"qtyDropped": {"type":"integer"},
+					"qtyDestroyed": {"type":"integer"},
+					"singelton": {"type":"integer"}
+				},
+				"required": ["typeID", "flag", "qtyDropped", "qtyDestroyed", "singelton"],
+				"additionalProperties": false
+			}
+		},
+		"position":{
+			"type": "object",
+			"properties":{
+				"x": {"type":"number"},
+				"y": {"type":"number"},
+				"z": {"type":"number"}
+			},
+			"required": ["x", "y", "z"],
+			"additionalProperties": false
+		},
+		"zkb":{
+			"type": "object",
+			"properties":{
+				"locationID": {"type":"integer"},
+				"hash": {"type":"string"},
+				"totalValue": {"type":"number"},
+				"points": {"type":"integer"},
+				"npc": {"type":"boolean"}
+			},
+			"required": ["hash", "npc"],
+			"additionalProperties": false
+		},
+		"required": ["killID", "solarSystemID", "killTime", "victim", "attackers", "items", "position", "zkb"],
+		"additionalProperties": false
+	}
+}

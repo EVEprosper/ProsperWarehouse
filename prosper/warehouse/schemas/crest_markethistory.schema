@@ -20,6 +20,7 @@
 			"required": ["source", "version", "prosperwarehouse", "date_collected"],
 			"additionalProperties": false
 		},
-		"required": ["metadata", "date", "type_id", "region_id"]
+		"required": ["metadata", "date", "type_id", "region_id"],
+		"additionalProperties": false
 	}
 }
