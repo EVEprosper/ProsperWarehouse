@@ -1,0 +1,21 @@
+language: python
+python:
+  - "3.5"
+  - "3.6"
+cache: pip
+install: 
+  - "pip install ."
+after_success:
+  - "pip install python-coveralls"
+  - "coveralls"
+deploy:
+  provider: pypi
+  user: lockefox
+  password:
+    secure: TODO
+  on:
+    tags: true
+    distributions: "sdist bdist_wheel"
+after_deploy:
+  - "pip install plumbum"
+  - "python scripts/schema_release.py"
