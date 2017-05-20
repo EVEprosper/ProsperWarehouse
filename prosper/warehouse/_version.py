@@ -2,7 +2,7 @@
 INSTALLED = True
 try:    #pragma: no cover
     import semantic_version
-except ModuleNotFoundError:
+except ImportError:
     INSTALLED = False
 
 __version__ = '1.0.0'

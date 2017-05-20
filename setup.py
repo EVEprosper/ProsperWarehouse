@@ -73,6 +73,7 @@ class PyTest(TestCommand):
         TestCommand.initialize_options(self)
         self.pytest_args = [
             'tests',
+            '-rx',
             '--cov=prosper/',
             '--cov-report=term-missing'
         ]    #load defaults here
@@ -108,7 +109,8 @@ setup(
     include_package_data=True,
     data_files=[
         ('docs', include_all_subfiles('docs')),
-        ('tests', include_all_subfiles('tests'))
+        ('tests', include_all_subfiles('tests')),
+        ('scripts', include_all_subfiles('scripts'))
     ],
     package_data={
         'prosper':[
@@ -117,16 +119,16 @@ setup(
         ]
     },
     install_requires=[
-        'ProsperCommon~=0.5.0',  #--extra-index-url=https://repo.fury.io/lockefox/
+        'ProsperCommon',  #--extra-index-url=https://repo.fury.io/lockefox/
         'jsonschema~=2.6.0',
         'pymongo~=3.4.0',
-        'pandas~=0.19.2',
-        'semantic_version~=2.6.0'
+        'pandas>=0.19.2',
+        'semantic_version~=2.6.0',
+        'tinymongo~=0.1.8.dev0'
     ],
     tests_require=[
         'pytest~=3.0.0',
-        'pytest_cov~=2.4.0',
-        #'tinymongo~=0.1.7.dev0'
+        'pytest_cov~=2.4.0'
     ],
     cmdclass={
         'test':PyTest
