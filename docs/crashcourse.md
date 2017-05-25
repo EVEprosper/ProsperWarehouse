@@ -5,7 +5,7 @@ ProsperWareouse is a library for managing database connectivity.  ProsperWarehou
 ```python
 import prosper.warehouse.connection as prosper_connection
 
-connection = prosper_connection.ProsperConnector(
+connection = prosper_connection.ProsperWarehouse(
 	collection='dummy_collection',
 	config=ConfigParser,
 	logger=logger,
@@ -15,6 +15,5 @@ connection = prosper_connection.ProsperConnector(
 if TESTMODE:
 	connection.headless_mode()
 
-
-
 ```
+
