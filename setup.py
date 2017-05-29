@@ -136,7 +136,7 @@ setup(
         'dev':[
             'plumbum~=1.6.3'
         ]
-    }
+    },
     cmdclass={
         'test':PyTest
     }
