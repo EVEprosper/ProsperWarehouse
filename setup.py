@@ -115,7 +115,8 @@ setup(
     package_data={
         'prosper':[
             'warehouse/schemas/*',
-            'warehouse/warehouse.cfg'
+            'warehouse/warehouse.cfg',
+            'warehouse/master.schema'
         ]
     },
     install_requires=[
@@ -123,6 +124,7 @@ setup(
         'jsonschema~=2.6.0',
         'pymongo~=3.4.0',
         'pandas>=0.19.2',
+        'ujson>=1.35',
         'semantic_version~=2.6.0',
         'tinymongo~=0.1.8.dev0'
     ],
