@@ -132,6 +132,11 @@ setup(
         'pytest~=3.0.0',
         'pytest_cov~=2.4.0'
     ],
+    extras_require={
+        'dev':[
+            'plumbum~=1.6.3'
+        ]
+    }
     cmdclass={
         'test':PyTest
     }
