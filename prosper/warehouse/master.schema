@@ -1,13 +1,18 @@
 {
 	"type": "object",
 	"properties":{
+		"short_name": {"type":"string"},
+		"file_name": {"type":"string"},
 		"version": {"type":"string"},
 		"version_numeric": {"type":"float"},
 		"date": {"type":"string", "format":"date-time"},
 		"schema":{
 			"type":"object"
 		},
-		"required":["version", "version_numeric", "date", "schema"],
+		"required":[
+			"short_name", "file_name", "version", "version_numeric",
+			"date", "schema"
+		],
 		"cache_time":{"type":"string", "format":"date-time"},
 		"additionalProperties": false
 	}
