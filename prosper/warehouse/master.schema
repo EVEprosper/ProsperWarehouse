@@ -1,0 +1,14 @@
+{
+	"type": "object",
+	"properties":{
+		"version": {"type":"string"},
+		"version_numeric": {"type":"float"},
+		"date": {"type":"string", "format":"date-time"},
+		"schema":{
+			"type":"object"
+		},
+		"required":["version", "version_numeric", "date", "schema"],
+		"cache_time":{"type":"string", "format":"date-time"},
+		"additionalProperties": false
+	}
+}
