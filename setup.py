@@ -123,10 +123,10 @@ setup(
         'ProsperCommon',  #--extra-index-url=https://repo.fury.io/lockefox/
         'jsonschema~=2.6.0',
         'pymongo~=3.4.0',
-        'pandas>=0.19.2',
-        'ujson>=1.35',
-        'semantic_version~=2.6.0',
         'tinymongo~=0.1.8.dev0'
+        'pandas',
+        'ujson',
+        'semantic_version'
     ],
     tests_require=[
         'pytest~=3.0.0',
