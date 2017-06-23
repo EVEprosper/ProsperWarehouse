@@ -41,7 +41,7 @@ class ManagerScript(cli.Application):
             self.__log_builder.configure_discord_logger()
 
         logger = self.__log_builder.logger
-        logger.info('HELLO WORLD')
+        logger.info('HELLO WORLD -- DEFAULT')
 
 @ManagerScript.subcommand('pull')
 class PullSchemas(cli.Application):
@@ -49,7 +49,11 @@ class PullSchemas(cli.Application):
 
     def main(self):
         """core logic goes here"""
-        pass
+        if not self.debug:
+            self.__log_builder.configure_discord_logger()
+
+        logger = self.__log_builder.logger
+        logger.info('HELLO WORLD -- PULL')
 
 @ManagerScript.subcommand('push')
 class PushSchemas(cli.Application):
@@ -61,7 +65,7 @@ class PushSchemas(cli.Application):
             self.__log_builder.configure_discord_logger()
 
         logger = self.__log_builder.logger
-        logger.info('HELLO WORLD')
+        logger.info('HELLO WORLD -- PUSH')
 
 if __name__ == '__main__':
     ManagerScript.run()
