@@ -3,6 +3,7 @@ from os import path
 import warnings
 
 import pymongo
+import tinymongo
 
 import prosper.common.prosper_logging as p_logging
 import prosper.common.prosper_config as p_config
@@ -93,6 +94,9 @@ class ProsperWarehouse(object):
 
     def __bool__(self):
         """is class ready to query?"""
+        if self.testmode:
+            return True
+
         status = all([
             self.config.get('WAREHOUSE', 'mongo_host'),
             self.config.get('WAREHOUSE', 'mongo_port'),
@@ -107,6 +111,31 @@ class ProsperWarehouse(object):
 
         return status
 
+    def __which_connector(self):
+        """selects mongo/tinymongo connector for connecting
+
+        Returns:
+            (:obj:`pymongo.MongoClient` OR :obj:`tinymongo.TinyMongoClient`)
+
+        """
+        if self.testmode:
+            warnings.warn(
+                'USING LOCAL DB TINYMONGO',
+                exceptions.TestModeWarning()
+            )
+            self.logger.info('connecting to tinymongo %s', HERE)
+            mongo_conn = tinymongo.TinyMongoClient(HERE)
+        else:
+            if not bool(self):
+                self.logger.warning('Unable to connect to mongo, missing info')
+                raise exceptions.MongoConnectionStringException()
+            self.logger.info('connecting to mongo %s', self.mongo_address)
+            mongo_conn = pymongo.MongoClient(self.mongo_address.format(
+                password=self.config.get('WAREHOUSE', 'mongo_passwd')
+            ))
+
+        return mongo_conn
+
     def __enter__(self):
         """for `with obj()` logic -- open connection
 
@@ -114,13 +143,7 @@ class ProsperWarehouse(object):
             (:obj:`pymongo.MongoClient.collections`) handle for query
 
         """
-        if not bool(self):
-            self.logger.warning('Unable to connect to mongo')
-            raise exceptions.MongoConnectionStringException()
-
-        self.logger.info('connecting to: %s', self.mongo_address)
-        self.mongo_conn = pymongo.MongoClient(self.mongo_address.format(
-            password=self.config.get('WAREHOUSE', 'mongo_passwd')))
+        self.mongo_conn = self.__which_connector()
 
         return self.mongo_conn[self.collection]
 
