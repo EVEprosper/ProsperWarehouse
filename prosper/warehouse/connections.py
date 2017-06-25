@@ -61,14 +61,40 @@ class ProsperWarehouse(object):
         self.collection = collection_name
         self.collection_exists = None
 
-        self.mongo_address = CONNECTION_STR.format(
-            username=self.config.get('mongo_user'),
-            hostname=self.config.get('mongo_host'),
-            port=self.config.get('mongo_port'),
-            database=self.config.get('mongo_db')
-        )
+        self.mongo_address = self.validate()
 
         self.mongo_conn = None
+
+    def validate(self):
+        """make sure connection string is ready
+
+        Returns:
+            (str): mongo connection str
+
+        """
+        if self.testmode:
+            return 'TESTMODE'
+        if not all([
+                self.config.get('WAREHOUSE', 'mongo_host'),
+                self.config.get('WAREHOUSE', 'mongo_port'),
+                self.config.get('WAREHOUSE', 'mongo_user'),
+                self.config.get('WAREHOUSE', 'mongo_passwd'),
+                self.config.get('WAREHOUSE', 'mongo_db'),
+                self.collection
+        ]):
+            raise exceptions.MongoConnectionStringException()
+
+        else:
+            return CONNECTION_STR.format(
+                username=self.config.get('mongo_user'),
+                hostname=self.config.get('mongo_host'),
+                port=self.config.get('mongo_port'),
+                database=self.config.get('mongo_db')
+            )
+
+    def __str__(self):
+        """return mongo connection str"""
+        return self.mongo_address
 
     def __check_collection_exists(self):
         """validate collection in database"""
@@ -97,19 +123,11 @@ class ProsperWarehouse(object):
         if self.testmode:
             return True
 
-        status = all([
-            self.config.get('WAREHOUSE', 'mongo_host'),
-            self.config.get('WAREHOUSE', 'mongo_port'),
-            self.config.get('WAREHOUSE', 'mongo_user'),
-            self.config.get('WAREHOUSE', 'mongo_passwd'),
-            self.config.get('WAREHOUSE', 'mongo_db'),
-            self.collection
-        ])
-
-        if not status:
+        if not self.mongo_address:
             self.__bad_connection_info()
+            return False
 
-        return status
+        return True
 
     def __which_connector(self):
         """selects mongo/tinymongo connector for connecting
