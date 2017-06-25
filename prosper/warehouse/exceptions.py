@@ -3,14 +3,28 @@
 class WarehouseException(Exception):
     """base class for Warehouse exceptions"""
     pass
+class WarehouseWarning(UserWarning):
+    """warning parent class for ProsperWarehouse"""
+    pass
 
 class VirginInstallOverride(WarehouseException):
     """pip install . environment override"""
     pass
 
-class WarehouseWarning(UserWarning):
-    """warning parent class for ProsperWarehouse"""
+## PROSPER.WAREHOUSE.CONNECTIONS ##
+class ConnectionException(WarehouseException):
+    """base exception for prosper.warehouse.connections errors"""
     pass
+class ConnectionWarning(WarehouseWarning):
+    """base warning for prosper.warehouse.connections warnings"""
+    pass
+class MongoConnectionStringException(ConnectionException):
+    """unable to make a valid connection string"""
+    pass
+class MongoMissingKeysWarning(ConnectionWarning):
+    """warning for missing keys"""
+    pass
+
 class LibrarySchemaWarning(WarehouseWarning):
     """warning for failing mongo connection and fallback to library"""
     pass
