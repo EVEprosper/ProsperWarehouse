@@ -22,23 +22,6 @@ EXPECTED_OPTIONS = [
     'mongo_db'
 ]
 CONNECTION_STR = 'mongodb://{username}:{{password}}@{hostname}:{port}/{database}'
-def get_connection(
-        config,
-        testmode=False,
-        logger=LOGGER
-):
-    """get a mongo connection object
-
-    Args:
-        config (:obj:`prosper_config.ProsperConfig`): connection args in config
-        testmode (bool, optional): switch to testmode/local/tinymongo connectors
-        logger (:obj:`logging.logger`, optional): logging handle
-
-    Returns:
-        (:obj:`pymongo.MongoClient` OR :obj:`tinymongo.TinyMongoClient`)
-
-    """
-    logger.info('generating mongo connection')
 
 class ProsperWarehouse(object):
     """container for connecting to Prosper's warehouse
@@ -50,15 +33,13 @@ class ProsperWarehouse(object):
     """
     def __init__(
             self,
-            collection_name,
-            config_override=DEFAULT_CONFIG,
+            config=DEFAULT_CONFIG,
             testmode_override=False,
             logger=LOGGER
     ):
         self.testmode = testmode_override
         self.logger = logger
-        self.config = config_override
-        self.collection = collection_name
+        self.config = config
         self.collection_exists = None
 
         self.mongo_address = self.validate()
@@ -78,18 +59,19 @@ class ProsperWarehouse(object):
                 self.config.get('WAREHOUSE', 'mongo_host'),
                 self.config.get('WAREHOUSE', 'mongo_port'),
                 self.config.get('WAREHOUSE', 'mongo_user'),
-                self.config.get('WAREHOUSE', 'mongo_passwd'),
-                self.config.get('WAREHOUSE', 'mongo_db'),
-                self.collection
+                self.config.get('WAREHOUSE', 'mongo_paswd'),
+                self.config.get('WAREHOUSE', 'mongo_db')
+                #self.collection
         ]):
             raise exceptions.MongoConnectionStringException()
 
         else:
+            self.database = self.config.get('WAREHOUSE', 'mongo_db')
             return CONNECTION_STR.format(
-                username=self.config.get('mongo_user'),
-                hostname=self.config.get('mongo_host'),
-                port=self.config.get('mongo_port'),
-                database=self.config.get('mongo_db')
+                username=self.config.get('WAREHOUSE', 'mongo_user'),
+                hostname=self.config.get('WAREHOUSE', 'mongo_host'),
+                port=self.config.get('WAREHOUSE', 'mongo_port'),
+                database=self.database
             )
 
     def __str__(self):
@@ -149,7 +131,7 @@ class ProsperWarehouse(object):
                 raise exceptions.MongoConnectionStringException()
             self.logger.info('connecting to mongo %s', self.mongo_address)
             mongo_conn = pymongo.MongoClient(self.mongo_address.format(
-                password=self.config.get('WAREHOUSE', 'mongo_passwd')
+                password=self.config.get('WAREHOUSE', 'mongo_paswd')
             ))
 
         return mongo_conn
@@ -163,7 +145,7 @@ class ProsperWarehouse(object):
         """
         self.mongo_conn = self.__which_connector()
 
-        return self.mongo_conn[self.collection]
+        return self.mongo_conn[self.database]
 
     def __exit__(self, exception_type, exception_value, traceback):
         """for `with obj()` logic -- close connection"""
