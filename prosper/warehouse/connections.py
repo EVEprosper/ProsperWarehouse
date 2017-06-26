@@ -67,12 +67,16 @@ class ProsperWarehouse(object):
 
         else:
             self.database = self.config.get('WAREHOUSE', 'mongo_db')
-            return CONNECTION_STR.format(
+            connect_str = CONNECTION_STR.format(
                 username=self.config.get('WAREHOUSE', 'mongo_user'),
                 hostname=self.config.get('WAREHOUSE', 'mongo_host'),
                 port=self.config.get('WAREHOUSE', 'mongo_port'),
                 database=self.database
             )
+            if self.config.get('WAREHOUSE', 'mongo_options'):
+                connect_str = connect_str + self.config.get('WAREHOUSE', 'mongo_options')
+
+            return connect_str
 
     def __str__(self):
         """return mongo connection str"""

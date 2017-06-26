@@ -26,7 +26,7 @@ def test_prod_mongo_happypath():
 
     print(prod_connection)
     with prod_connection as mongo_handle:
-        test_data = mongo_handle[test_collection].find_one({})
+        test_data = mongo_handle[test_collection].find_one({}, projection={'_id': False})
 
     assert isinstance(test_data, dict)
     assert test_data == helpers.TEST_RECORD

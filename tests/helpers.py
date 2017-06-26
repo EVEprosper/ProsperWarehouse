@@ -17,7 +17,7 @@ TEST_RECORD = {
         "test_int": 99,
         "test_float": 123.456
     },
-    "datetime": datetime(2017, 1, 30, 16, 0, 0, 0),
+    "datetime": datetime(2017, 1, 31, 0, 0, 0, 0),
     "test_null": None,
     "test_version": "1.0.0"
 }
