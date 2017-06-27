@@ -24,13 +24,20 @@ def test_prod_mongo_happypath():
     test_collection = TEST_CONFIG.get('MONGO', 'test_collection')
     prod_connection = connections.ProsperWarehouse(config=ROOT_CONFIG)
 
-    print(prod_connection)
     with prod_connection as mongo_handle:
         test_data = mongo_handle[test_collection].find_one({}, projection={'_id': False})
 
     assert isinstance(test_data, dict)
     assert test_data == helpers.TEST_RECORD
 
+    conn_str = str(prod_connection)
+    assert '{password}' in conn_str
+    #TODO: more mongodb:// validation?
+
+def test_prod_mongo_badconfig():
+    """test prod connection with bad config"""
+    with pytest.raises(exceptions.MongoConnectionStringException):
+        bad_connection = connections.ProsperWarehouse(config=TEST_CONFIG)
 def test_test_mongo_happypath():
     """test tinymongo normal path for connections"""
     test_collection = TEST_CONFIG.get('MONGO', 'test_collection')
