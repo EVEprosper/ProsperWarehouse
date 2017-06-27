@@ -1,13 +1,11 @@
 """connections.py framework for using Prosper data warehouses"""
 from os import path
+from datetime import datetime
 import warnings
 
 import pymongo
-#import tinymongo
-#import tinydb_serialization
-from tinymongo import TinyMongoClient
-from tinymongo.serializers import DateTimeSerializer
-from tinydb_serialization import SerializationMiddleware
+import tinydb_serialization
+import tinymongo
 
 import prosper.common.prosper_logging as p_logging
 import prosper.common.prosper_config as p_config
@@ -27,18 +25,31 @@ EXPECTED_OPTIONS = [
 ]
 CONNECTION_STR = 'mongodb://{username}:{{password}}@{hostname}:{port}/{database}'
 
-class ProsperTinyMongo(TinyMongoClient):
+class DateTimeSerializer(tinydb_serialization.Serializer):
+    """TinyDB serializer:
+        https://github.com/msiemens/tinydb-serialization#creating-a-serializer
+    """
+    OBJ_CLASS = datetime  # The class this serializer handles
+
+    def encode(self, obj):
+        """obj -> str writing to .json file"""
+        return obj.strftime('%Y-%m-%dT%H:%M:%S')
+
+    def decode(self, s):
+        """str -> obj reading from .json file"""
+        return datetime.strptime(s, '%Y-%m-%dT%H:%M:%S')
+
+class ProsperTinyMongo(tinymongo.TinyMongoClient):
     """Extend serialization to better match MongoDB
         https://github.com/schapman1974/tinymongo#handling-datetime-objects
     """
     @property
     def _storage(self):
-        serialization = SerializationMiddleware()
+        serialization = tinydb_serialization.SerializationMiddleware()
         serialization.register_serializer(
             DateTimeSerializer(),
             'TinyDate'
         )
-
         return serialization
 
 class ProsperWarehouse(object):
@@ -119,7 +130,6 @@ class ProsperWarehouse(object):
             'Unable to connect to mongo, missing keys: {}'.format(missing_keys),
             exceptions.MongoMissingKeysWarning()
         )
-        #self.logger.info('missing keys: {}'.format(missing_keys))
         return missing_keys
 
     def __bool__(self):

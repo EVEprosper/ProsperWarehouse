@@ -2,9 +2,8 @@
 from os import path, remove
 from datetime import datetime
 
-import tinymongo
-
 import prosper.common.prosper_config as p_config
+import prosper.warehouse.connections as p_connect
 
 HERE = path.abspath(path.dirname(__file__))
 ROOT = path.dirname(HERE)
@@ -56,9 +55,17 @@ def init_tinymongo(
     Returns:
         (:obj:`dict`): expected data if reformatted
     """
-    if path.isfile(path_to_tinymongo):
-        remove(path_to_tinymongo)
-    client = tinymongo.TinyMongoClient(path_to_tinymongo)
+    db_filepath = path.join(path_to_tinymongo, 'prosper.json')
+    if path.isfile(db_filepath):
+        remove(db_filepath)
+
+    ##################################
+    ## NOTE:                        ##
+    ## Needs ProsperTinyMongo       ##
+    ## --OR--                       ##
+    ## attached DateTimeSerializer  ##
+    ##################################
+    client = p_connect.ProsperTinyMongo(path_to_tinymongo)
 
     doc_id = client[database_name][collection_name].insert_one(data_to_write)
 
