@@ -20,7 +20,7 @@ EXPECTED_OPTIONS = [
     'mongo_host',
     'mongo_port',
     'mongo_user',
-    'mongo_passwd',
+    'mongo_paswd',
     'mongo_db'
 ]
 CONNECTION_STR = 'mongodb://{username}:{{password}}@{hostname}:{port}/{database}'
@@ -93,6 +93,7 @@ class ProsperWarehouse(object):
                 self.config.get('WAREHOUSE', 'mongo_db')
                 #self.collection
         ]):
+            self.__bad_connection_info()
             raise exceptions.MongoConnectionStringException()
 
         else:
@@ -111,16 +112,13 @@ class ProsperWarehouse(object):
         """return mongo connection str"""
         return self.mongo_address
 
-    def __check_collection_exists(self):
-        """validate collection in database"""
-        raise NotImplementedError('Collection $exists not set up')
-
     def __bad_connection_info(self):
         """print more info for bad connection string
 
         Returns:
             (:obj:`list) names of blank keys
         """
+        ## TODO remove?
         missing_keys = []
         for expected_key in EXPECTED_OPTIONS:
             if not self.config.get('WAREHOUSE', expected_key):
@@ -128,7 +126,7 @@ class ProsperWarehouse(object):
 
         warnings.warn(
             'Unable to connect to mongo, missing keys: {}'.format(missing_keys),
-            exceptions.MongoMissingKeysWarning()
+            exceptions.MongoMissingKeysWarning
         )
         return missing_keys
 
