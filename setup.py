@@ -124,6 +124,7 @@ setup(
         'jsonschema~=2.6.0',
         'pymongo~=3.4.0',
         'tinymongo~=0.1.8.dev0',
+        'tinydb_serialization~=1.0.4',
         'pandas',
         'ujson',
         'semantic_version'

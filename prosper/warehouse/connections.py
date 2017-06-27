@@ -3,7 +3,11 @@ from os import path
 import warnings
 
 import pymongo
-import tinymongo
+#import tinymongo
+#import tinydb_serialization
+from tinymongo import TinyMongoClient
+from tinymongo.serializers import DateTimeSerializer
+from tinydb_serialization import SerializationMiddleware
 
 import prosper.common.prosper_logging as p_logging
 import prosper.common.prosper_config as p_config
@@ -22,6 +26,20 @@ EXPECTED_OPTIONS = [
     'mongo_db'
 ]
 CONNECTION_STR = 'mongodb://{username}:{{password}}@{hostname}:{port}/{database}'
+
+class ProsperTinyMongo(TinyMongoClient):
+    """Extend serialization to better match MongoDB
+        https://github.com/schapman1974/tinymongo#handling-datetime-objects
+    """
+    @property
+    def _storage(self):
+        serialization = SerializationMiddleware()
+        serialization.register_serializer(
+            DateTimeSerializer(),
+            'TinyDate'
+        )
+
+        return serialization
 
 class ProsperWarehouse(object):
     """container for connecting to Prosper's warehouse
@@ -128,7 +146,7 @@ class ProsperWarehouse(object):
                 exceptions.TestModeWarning
             )
             self.logger.info('connecting to tinymongo %s', HERE)
-            mongo_conn = tinymongo.TinyMongoClient(HERE)
+            mongo_conn = ProsperTinyMongo(HERE)
         else:
             if not bool(self):
                 self.logger.warning('Unable to connect to mongo, missing info')

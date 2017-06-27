@@ -1,5 +1,5 @@
 """helpers.py: test utilities for common functionality"""
-from os import path
+from os import path, remove
 from datetime import datetime
 
 import tinymongo
@@ -21,7 +21,7 @@ TEST_RECORD = {
     },
     ## vv FIXME vv : Datetime vs tinymongo Serialization is FUBAR
     # https://github.com/msiemens/tinydb-serialization
-    #"datetime": datetime(2017, 1, 31, 0, 0, 0, 0),
+    "datetime": datetime(2017, 1, 31, 0, 0, 0, 0),
     ## ^^ FIXME ^^ ##
     "test_null": None,
     "test_version": "1.0.0"
@@ -56,6 +56,8 @@ def init_tinymongo(
     Returns:
         (:obj:`dict`): expected data if reformatted
     """
+    if path.isfile(path_to_tinymongo):
+        remove(path_to_tinymongo)
     client = tinymongo.TinyMongoClient(path_to_tinymongo)
 
     doc_id = client[database_name][collection_name].insert_one(data_to_write)
