@@ -136,6 +136,7 @@ class ProsperWarehouse(object):
             return True
 
         if not self.mongo_address:
+            #TODO: better test for queryability?
             self.__bad_connection_info()
             return False
 
@@ -157,6 +158,7 @@ class ProsperWarehouse(object):
             mongo_conn = ProsperTinyMongo(HERE)
         else:
             if not bool(self):
+                #TODO: better test for queryability?
                 self.logger.warning('Unable to connect to mongo, missing info')
                 raise exceptions.MongoConnectionStringException()
             self.logger.info('connecting to mongo %s', self.mongo_address)
