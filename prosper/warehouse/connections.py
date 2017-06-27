@@ -34,10 +34,10 @@ class ProsperWarehouse(object):
     def __init__(
             self,
             config=DEFAULT_CONFIG,
-            testmode_override=False,
+            testmode=False,
             logger=LOGGER
     ):
-        self.testmode = testmode_override
+        self.testmode = testmode
         self.logger = logger
         self.config = config
         self.collection_exists = None
@@ -53,6 +53,7 @@ class ProsperWarehouse(object):
             (str): mongo connection str
 
         """
+        self.database = self.config.get('WAREHOUSE', 'mongo_db')
         if self.testmode:
             return 'TESTMODE'
         if not all([
@@ -66,7 +67,6 @@ class ProsperWarehouse(object):
             raise exceptions.MongoConnectionStringException()
 
         else:
-            self.database = self.config.get('WAREHOUSE', 'mongo_db')
             connect_str = CONNECTION_STR.format(
                 username=self.config.get('WAREHOUSE', 'mongo_user'),
                 hostname=self.config.get('WAREHOUSE', 'mongo_host'),
@@ -125,7 +125,7 @@ class ProsperWarehouse(object):
         if self.testmode:
             warnings.warn(
                 'USING LOCAL DB TINYMONGO',
-                exceptions.TestModeWarning()
+                exceptions.TestModeWarning
             )
             self.logger.info('connecting to tinymongo %s', HERE)
             mongo_conn = tinymongo.TinyMongoClient(HERE)

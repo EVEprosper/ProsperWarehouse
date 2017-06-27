@@ -21,7 +21,7 @@ class ConnectionWarning(WarehouseWarning):
 class MongoConnectionStringException(ConnectionException):
     """unable to make a valid connection string"""
     pass
-class DebugModeWarning(ConnectionWarning):
+class TestModeWarning(ConnectionWarning):
     """warning raised when connecting to tinymongo instance"""
     pass
 class MongoMissingKeysWarning(ConnectionWarning):

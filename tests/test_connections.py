@@ -30,4 +30,20 @@ def test_prod_mongo_happypath():
 
     assert isinstance(test_data, dict)
     assert test_data == helpers.TEST_RECORD
-    #TODO: assert test connection has data
+
+def test_test_mongo_happypath():
+    """test tinymongo normal path for connections"""
+    test_collection = TEST_CONFIG.get('MONGO', 'test_collection')
+    test_connector = connections.ProsperWarehouse(config=ROOT_CONFIG, testmode=True)
+
+    assert str(test_connector) == 'TESTMODE'
+
+    expected_data = helpers.init_tinymongo(
+        helpers.TEST_RECORD,
+        test_collection
+    )
+    with test_connector as mongo_handle:
+        test_data = mongo_handle[test_collection].find_one({})
+
+    test_data.pop('_id')    #projection doesn't work with tinymongo
+    assert test_data == expected_data
