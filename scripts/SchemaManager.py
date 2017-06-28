@@ -1,11 +1,12 @@
 """SchemaManager.py: helper script for syncronizing library schemas with SoT"""
 
+from datetime import datetime
 from os import path
 import json
 
 import semantic_version
-from pymongo import MongoClient
 from plumbum import cli
+from jsonschema import validate
 
 import prosper.common.prosper_logging as p_logging
 import prosper.common.prosper_config as p_config
@@ -19,6 +20,38 @@ CONFIG = p_config.ProsperConfig(CONFIG_PATH)
 
 PROD_SCHEMA_PATH = path.join(ROOT, 'prosper', 'warehouse', 'schemas')
 
+def trim_results(
+        results_list,
+        drop_key='_id'
+):
+    """tinymongo doesn't have $projection, trim keys
+
+    Args:
+        results_list (:obj:`list`): results to trim
+        drop_keys (str): key to trim from obj
+
+    Returns:
+        (:obj:`list`) trimmed list
+
+    """
+    pass
+
+def get_schema_from_mongo(
+        connector,
+        schema_name,
+        logger=p_logging.DEFAULT_LOGGER
+):
+    """"pull schema from mongodb
+
+    Args:
+        connector (:obj:`p_connection.ProsperWarehouse`): database connector
+        schema_name (str): name to look up
+        logger (:obj:`logging.logger`, optional): logging handle
+
+    Returns:
+        (:obj:`dict`): latest schema
+    """
+    pass
 
 class ManagerScript(cli.Application):
     """application for managing schemas in mongoDB"""
