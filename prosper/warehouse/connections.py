@@ -6,6 +6,7 @@ import warnings
 import pymongo
 import tinydb_serialization
 import tinymongo
+import semantic_version
 
 import prosper.common.prosper_logging as p_logging
 import prosper.common.prosper_config as p_config
@@ -39,6 +40,18 @@ class DateTimeSerializer(tinydb_serialization.Serializer):
         """str -> obj reading from .json file"""
         return datetime.strptime(s, '%Y-%m-%dT%H:%M:%S')
 
+class SemanticVersionSerializer(tinydb_serialization.Serializer):
+    """TinyDB serializer for semantic versions"""
+    OBJ_CLASS = semantic_version
+
+    def encode(self, obj):
+        """obj -> str writing to .json file"""
+        return str(obj)
+
+    def decode(self, s):
+        """str -> obj reading from .json file"""
+        return semantic_version(s)
+
 class ProsperTinyMongo(tinymongo.TinyMongoClient):
     """Extend serialization to better match MongoDB
         https://github.com/schapman1974/tinymongo#handling-datetime-objects
@@ -49,6 +62,10 @@ class ProsperTinyMongo(tinymongo.TinyMongoClient):
         serialization.register_serializer(
             DateTimeSerializer(),
             'TinyDate'
+        )
+        serialization.register_serializer(
+            SemanticVersionSerializer(),
+            'TinyVersion'
         )
         return serialization
 
