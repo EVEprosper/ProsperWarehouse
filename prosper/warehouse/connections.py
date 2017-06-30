@@ -63,22 +63,24 @@ class ProsperTinyMongo(tinymongo.TinyMongoClient):
             DateTimeSerializer(),
             'TinyDate'
         )
-        serialization.register_serializer(
-            SemanticVersionSerializer(),
-            'TinyVersion'
-        )
+        #serialization.register_serializer(
+        #    SemanticVersionSerializer(),
+        #    'TinyVersion'
+        #)
         return serialization
 
 class ProsperWarehouse(object):
     """container for connecting to Prosper's warehouse
 
     Args:
+        collection (str): specific table to connect to
         config_override (:obj:`prosper_config.ProsperConfig`): defaults override
         testmode_override (bool, optional): force no-connection local-only mode
         logger (:obj:`logging.logger`, optional): logging handle for debugging
     """
     def __init__(
             self,
+            collection,
             config=DEFAULT_CONFIG,
             testmode=False,
             logger=LOGGER
@@ -87,6 +89,7 @@ class ProsperWarehouse(object):
         self.logger = logger
         self.config = config
         self.collection_exists = None
+        self.collection = collection
 
         self.mongo_address = self.validate()
 
@@ -194,7 +197,7 @@ class ProsperWarehouse(object):
         """
         self.mongo_conn = self.__which_connector()
 
-        return self.mongo_conn[self.database]
+        return self.mongo_conn[self.database][self.collection]
 
     def __exit__(self, exception_type, exception_value, traceback):
         """for `with obj()` logic -- close connection"""
