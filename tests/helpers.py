@@ -55,7 +55,7 @@ def init_tinymongo(
     Returns:
         (:obj:`dict`): expected data if reformatted
     """
-    db_filepath = path.join(path_to_tinymongo, 'prosper.json')
+    db_filepath = path.join(path_to_tinymongo, database_name + '.json')
     if path.isfile(db_filepath):
         remove(db_filepath)
 
