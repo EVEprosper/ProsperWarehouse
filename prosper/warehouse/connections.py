@@ -42,7 +42,7 @@ class DateTimeSerializer(tinydb_serialization.Serializer):
 
 class SemanticVersionSerializer(tinydb_serialization.Serializer):
     """TinyDB serializer for semantic versions"""
-    OBJ_CLASS = semantic_version
+    OBJ_CLASS = semantic_version.base.Version
 
     def encode(self, obj):
         """obj -> str writing to .json file"""
@@ -63,10 +63,10 @@ class ProsperTinyMongo(tinymongo.TinyMongoClient):
             DateTimeSerializer(),
             'TinyDate'
         )
-        #serialization.register_serializer(
-        #    SemanticVersionSerializer(),
-        #    'TinyVersion'
-        #)
+        serialization.register_serializer(
+            SemanticVersionSerializer(),
+            'TinyVersion'
+        )
         return serialization
 
 class ProsperWarehouse(object):
