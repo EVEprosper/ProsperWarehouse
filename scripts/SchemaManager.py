@@ -150,6 +150,14 @@ class PushSchemas(cli.Application):
         logger = self.__log_builder.logger
         logger.info('HELLO WORLD -- PUSH')
 
+        logger.info('building mongo connector')
+        connector = p_connection.ProsperWarehouse(
+            CONFIG.get('WAREHOUSE', 'master_schema'),
+            config=CONFIG,
+            testmode=self.debug,
+            logger=logger
+        )
+
 
 
 if __name__ == '__main__':

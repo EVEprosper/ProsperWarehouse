@@ -128,6 +128,34 @@ class ProsperWarehouse(object):
 
             return connect_str
 
+    def query(
+            query,
+            limit=0,
+            skip=0,
+            projection={},
+            distinct='',
+            sort=()
+    ):
+        """generic query to pull data from mongoDB
+
+        Note:
+            For very vanilla queries.  Please use pymongo more directly with:
+                `with ProsperWarehouse as mongo_handle`
+
+        Args:
+            query (:obj:`dict`): mongoDB query dict
+            limit (int, optional): cap total number of results
+            skip (int, optional): pagination
+            projection (:obj:`dict`, optional): limit the keys returned
+            distinct (str, optional): use $distinct filter
+            sort (:obj:`tuple`, optional): (sortkey, pymongo.direction)
+
+        Returns:
+            (:obj:`list): data from mongoDB
+
+        """
+        pass
+
     def __str__(self):
         """return mongo connection str"""
         return self.mongo_address
