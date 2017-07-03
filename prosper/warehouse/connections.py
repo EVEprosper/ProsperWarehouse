@@ -32,6 +32,23 @@ DEFAULT_PROJECTION = {
     '_id': False,
     'metadata': False
 }
+
+def tinydb_projection(
+        data,
+        projection,
+        logger=p_logging.DEFAULT_LOGGER
+):
+    """tinydb does not support $projection.  Poorman's implementation
+
+    Args:
+        data (:obj:`list`) data from [tiny]mongodb
+        projection (:obj:`dict`): projection to filter
+
+    Returns:
+        (:obj:`list`): scrubbed results
+
+    """
+    pass
 class DateTimeSerializer(tinydb_serialization.Serializer):
     """TinyDB serializer:
         https://github.com/msiemens/tinydb-serialization#creating-a-serializer
