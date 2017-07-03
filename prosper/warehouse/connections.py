@@ -7,11 +7,13 @@ import pymongo
 import tinydb_serialization
 import tinymongo
 import semantic_version
+import pandas as pd
 
 import prosper.common.prosper_logging as p_logging
 import prosper.common.prosper_config as p_config
 
 import prosper.warehouse.exceptions as exceptions
+
 HERE = path.abspath(path.dirname(__file__))
 LOGGER = p_logging.DEFAULT_LOGGER
 
@@ -26,6 +28,10 @@ EXPECTED_OPTIONS = [
 ]
 CONNECTION_STR = 'mongodb://{username}:{{password}}@{hostname}:{port}/{database}'
 
+DEFAULT_PROJECTION = {
+    '_id': False,
+    'metadata': False
+}
 class DateTimeSerializer(tinydb_serialization.Serializer):
     """TinyDB serializer:
         https://github.com/msiemens/tinydb-serialization#creating-a-serializer
@@ -128,30 +134,26 @@ class ProsperWarehouse(object):
 
             return connect_str
 
-    def query(
+    def get_data(
+            self,
             query,
-            limit=0,
-            skip=0,
-            projection={},
-            distinct='',
-            sort=()
+            **kwargs
     ):
-        """generic query to pull data from mongoDB
+        """fetch data from mongodb and return pandas
 
-        Note:
-            For very vanilla queries.  Please use pymongo more directly with:
-                `with ProsperWarehouse as mongo_handle`
+        Notes:
+            scrubs metadata from collection
 
         Args:
-            query (:obj:`dict`): mongoDB query dict
-            limit (int, optional): cap total number of results
+            query (:obj:`dict`): mongo query to execute
+            limit (int, optional): reduce rows returned
             skip (int, optional): pagination
-            projection (:obj:`dict`, optional): limit the keys returned
-            distinct (str, optional): use $distinct filter
+            projection (:obj:`dict`, optional): filter specific keys
+            distinct (str, optional):
             sort (:obj:`tuple`, optional): (sortkey, pymongo.direction)
 
         Returns:
-            (:obj:`list): data from mongoDB
+            (:obj:`pandas.DataFrame`)
 
         """
         pass
