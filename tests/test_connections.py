@@ -24,6 +24,8 @@ def test_prod_mongo_happypath():
     test_collection = TEST_CONFIG.get('MONGO', 'test_collection')
     prod_connection = connections.ProsperWarehouse(test_collection, config=ROOT_CONFIG)
 
+    if not bool(prod_connection):
+        pytest.xfail('LACKING CREDENTIALS FOR MONGODB')
     assert bool(prod_connection)
     conn_str = str(prod_connection)
     assert '{password}' in conn_str
