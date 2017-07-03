@@ -20,22 +20,6 @@ CONFIG = p_config.ProsperConfig(CONFIG_PATH)
 
 PROD_SCHEMA_PATH = path.join(ROOT, 'prosper', 'warehouse', 'schemas')
 
-def trim_results(
-        results_list,
-        drop_key='_id'
-):
-    """tinymongo doesn't have $projection, trim keys
-
-    Args:
-        results_list (:obj:`list`): results to trim
-        drop_keys (str): key to trim from obj
-
-    Returns:
-        (:obj:`list`) trimmed list
-
-    """
-    pass
-
 def get_schema_from_mongo(
         connector,
         schema_name,
