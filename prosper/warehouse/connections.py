@@ -97,6 +97,8 @@ def tinydb_projection(
 def keep_filter(filter_list, data):
     """keep what's in the filter
 
+    TODO: Pandas > for-loop?
+
     Args:
         filter (:obj:`list`): keys to keep from data list
         data (:obj:`list`): data to scrub
@@ -116,6 +118,8 @@ def keep_filter(filter_list, data):
 def drop_filter(filter_list, data):
     """drop what's in the filter
 
+    TODO: Pandas > for-loop?
+
     Args:
         filter (:obj:`list`): keys to drop from the list
         data (:obj:`list`): data to scrub
@@ -130,6 +134,34 @@ def drop_filter(filter_list, data):
         clean_data.append(filtered_data.pop(SPECIAL_KEYS))
 
     return clean_data
+
+def build_connection_str(config_obj, database):
+    """parse out the connection string
+
+    Args:
+        config_obj (:obj:`p_config.ProsperConfig`): config object with options
+        database (str): which db to connect to
+    Returns:
+        (str) connection str (without password)
+
+    """
+    conn_str = CONNECTION_STR
+    if config_obj.get('WAREHOUSE', 'mongo_str'):
+        conn_str = config_obj.get('WAREHOUSE', 'mongo_str')
+        mongo_str = conn_str.format(
+            username=config_obj.get('WAREHOUSE', 'mongo_user'),
+            port=config_obj.get('WAREHOUSE', 'mongo_port'),
+            database=database
+        )
+        return mongo_str
+
+    mongo_str = conn_str.format(
+        username=config_obj.get('WAREHOUSE', 'mongo_user'),
+        hostname=config_obj.get('WAREHOUSE', 'mongo_host'),
+        port=config_obj.get('WAREHOUSE', 'mongo_port'),
+        database=database
+    )
+    return mongo_str
 
 class DateTimeSerializer(tinydb_serialization.Serializer):
     """TinyDB serializer:
@@ -222,12 +254,7 @@ class ProsperWarehouse(object):
             raise exceptions.MongoConnectionStringException()
 
         else:
-            connect_str = CONNECTION_STR.format(
-                username=self.config.get('WAREHOUSE', 'mongo_user'),
-                hostname=self.config.get('WAREHOUSE', 'mongo_host'),
-                port=self.config.get('WAREHOUSE', 'mongo_port'),
-                database=self.database
-            )
+            connect_str = build_connection_str(self.config, self.database)
             if self.config.get('WAREHOUSE', 'mongo_options'):
                 connect_str = connect_str + self.config.get('WAREHOUSE', 'mongo_options')
 

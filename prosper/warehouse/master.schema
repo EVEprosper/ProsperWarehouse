@@ -1,19 +1,18 @@
 {
 	"type": "object",
 	"properties":{
-		"short_name": {"type":"string"},
+		"name": {"type":"string"},
 		"file_name": {"type":"string"},
 		"version": {"type":"string"},
-		"version_numeric": {"type":"float"},
+		"version_numeric": {"type":"number"},
 		"date": {"type":"string", "format":"date-time"},
 		"schema":{
 			"type":"object"
-		},
-		"required":[
-			"short_name", "file_name", "version", "version_numeric",
-			"date", "schema"
-		],
-		"cache_time":{"type":"string", "format":"date-time"},
-		"additionalProperties": false
-	}
+		}
+	},
+	"required":[
+		"name", "file_name", "version", "version_numeric",
+		"date", "schema"
+	],
+	"additionalProperties": false
 }
