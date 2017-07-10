@@ -33,6 +33,33 @@ DEFAULT_PROJECTION = {
     'metadata': False
 }
 
+SPECIAL_KEYS = ['_id']  #ALWAYS DROP
+def test_tinydb_projection(projection):
+    """mongoDB only allows all-True/all-False projections
+
+    Args:
+        projection (:obj:`dict`): projection to test
+
+    Returns:
+        (bool): go/no-go
+
+    """
+    keep_or_toss = None
+    for key, value in projection.keys():
+        if not isinstance(key, bool):
+            raise TypeError
+        if key in SPECIAL_KEYS:
+            continue
+
+        if keep_or_toss is None:
+            keep_or_toss = value
+            continue
+
+        if value != keep_or_toss:
+            return None
+
+    return keep_or_toss
+
 def tinydb_projection(
         data,
         projection,
@@ -48,7 +75,94 @@ def tinydb_projection(
         (:obj:`list`): scrubbed results
 
     """
-    pass
+    filter_direction = test_tinydb_projection(projection)
+    if filter_direction is None:
+        raise exceptions.BadProjectionException()
+
+    filter_list = list(set(projection.keys()) - set(SPECIAL_KEYS))
+
+    logger.info('--filtering data')
+    if filter_direction:
+        logger.info('----POSITIVE FILTER - Keep {}'.format(filter_list))
+        data = keep_filter(filter_list, list(data))
+    else:
+        logger.info('----NEGATIVE FILTER - Drop {}'.format(filter_list))
+        data = drop_filter(filter_list, list(data))
+
+        data = drop_filter(SPECIAL_KEYS, list(data))
+
+    return data
+
+
+def keep_filter(filter_list, data):
+    """keep what's in the filter
+
+    TODO: Pandas > for-loop?
+
+    Args:
+        filter (:obj:`list`): keys to keep from data list
+        data (:obj:`list`): data to scrub
+    Returns:
+        (:obj:`list`): cleaned data
+
+    """
+    clean_data = []
+    for row in data:
+        pop_list = list(set(filter_list) - set(row.keys))
+        clean_data.append(  #use list-comprehension for filter
+            [row.pop(key) for key in pop_list]
+        )
+
+    return clean_data
+
+def drop_filter(filter_list, data):
+    """drop what's in the filter
+
+    TODO: Pandas > for-loop?
+
+    Args:
+        filter (:obj:`list`): keys to drop from the list
+        data (:obj:`list`): data to scrub
+
+    Returns:
+        (:obj:`list`): cleaned data
+
+    """
+    clean_data = []
+    for row in data:
+        filtered_data = [row.pop(key) for key in filter_list]
+        clean_data.append(filtered_data.pop(SPECIAL_KEYS))
+
+    return clean_data
+
+def build_connection_str(config_obj, database):
+    """parse out the connection string
+
+    Args:
+        config_obj (:obj:`p_config.ProsperConfig`): config object with options
+        database (str): which db to connect to
+    Returns:
+        (str) connection str (without password)
+
+    """
+    conn_str = CONNECTION_STR
+    if config_obj.get('WAREHOUSE', 'mongo_str'):
+        conn_str = config_obj.get('WAREHOUSE', 'mongo_str')
+        mongo_str = conn_str.format(
+            username=config_obj.get('WAREHOUSE', 'mongo_user'),
+            port=config_obj.get('WAREHOUSE', 'mongo_port'),
+            database=database
+        )
+        return mongo_str
+
+    mongo_str = conn_str.format(
+        username=config_obj.get('WAREHOUSE', 'mongo_user'),
+        hostname=config_obj.get('WAREHOUSE', 'mongo_host'),
+        port=config_obj.get('WAREHOUSE', 'mongo_port'),
+        database=database
+    )
+    return mongo_str
+
 class DateTimeSerializer(tinydb_serialization.Serializer):
     """TinyDB serializer:
         https://github.com/msiemens/tinydb-serialization#creating-a-serializer
@@ -140,12 +254,7 @@ class ProsperWarehouse(object):
             raise exceptions.MongoConnectionStringException()
 
         else:
-            connect_str = CONNECTION_STR.format(
-                username=self.config.get('WAREHOUSE', 'mongo_user'),
-                hostname=self.config.get('WAREHOUSE', 'mongo_host'),
-                port=self.config.get('WAREHOUSE', 'mongo_port'),
-                database=self.database
-            )
+            connect_str = build_connection_str(self.config, self.database)
             if self.config.get('WAREHOUSE', 'mongo_options'):
                 connect_str = connect_str + self.config.get('WAREHOUSE', 'mongo_options')
 

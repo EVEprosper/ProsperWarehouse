@@ -130,7 +130,7 @@ setup(
         'semantic_version'
     ],
     tests_require=[
-        'pytest~=3.0.0',
+        'pytest~=3.1.0',
         'pytest_cov~=2.4.0'
     ],
     extras_require={

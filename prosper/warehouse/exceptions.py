@@ -21,6 +21,10 @@ class ConnectionWarning(WarehouseWarning):
 class MongoConnectionStringException(ConnectionException):
     """unable to make a valid connection string"""
     pass
+class BadProjectionException(ConnectionException):
+    """mongoDB only allows all-True/all-False projections"""
+    pass
+
 class TestModeWarning(ConnectionWarning):
     """warning raised when connecting to tinymongo instance"""
     pass
