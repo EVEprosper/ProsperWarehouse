@@ -158,7 +158,5 @@ class PushSchemas(cli.Application):
             logger=logger
         )
 
-
-
 if __name__ == '__main__':
     ManagerScript.run()
