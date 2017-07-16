@@ -1,7 +1,7 @@
 """SchemaManager.py: helper script for syncronizing library schemas with SoT"""
 
 from datetime import datetime
-from os import path
+from os import path, listdir
 import json
 
 import semantic_version
@@ -21,6 +21,8 @@ CONFIG = p_config.ProsperConfig(CONFIG_PATH)
 
 PROD_SCHEMA_PATH = path.join(ROOT, 'prosper', 'warehouse', 'schemas')
 MASTER_SCHEMA_PATH = path.join(ROOT, 'prosper', 'warehouse', 'master.schema')
+
+SCHEMA_FILETYPE = '.schema'
 
 def find_schema_version(
         connector,
@@ -126,6 +128,7 @@ def add_schema_metadata(
         schema,
         filename,
         schema_version,
+        master_schema_path=MASTER_SCHEMA_PATH,
         logger=p_logging.DEFAULT_LOGGER
 ):
     """build up extra data for tracking schema metadata
@@ -155,7 +158,7 @@ def add_schema_metadata(
 
     logger.debug(full_schema)
 
-    with open(MASTER_SCHEMA_PATH, 'r') as vfh:
+    with open(master_schema_path, 'r') as vfh:
         master_schema = json.load(vfh)
 
     ## Validator will throw if there is issue
@@ -187,6 +190,16 @@ class ManagerScript(cli.Application):
         """toggle verbose/stdout logger"""
         self.__log_builder.configure_debug_logger()
 
+    @cli.switch(
+        ['--type'],
+        str,
+        help='Override schema filetype -- DEFAULT `{}`'.format(SCHEMA_FILETYPE)
+    )
+    def override_filetype(self, schema_filetype):
+        """override schema filetype"""
+        global SCHEMA_FILETYPE
+        SCHEMA_FILETYPE = schema_filetype
+
     def main(self):
         """core logic goes here"""
         if not self.debug:
@@ -211,28 +224,18 @@ class PullSchemas(cli.Application):
 @ManagerScript.subcommand('push')
 class PushSchemas(cli.Application):
     """pushes one schema up to mongoDB"""
+    source_list = []
+    filename_list = []
 
-    source = {}
-    filename = ''
     @cli.switch(
         ['-s', '--source'],
         str,
         help='schema file to upload'
     )
     def override_source(self, source_path):
-        """schema to upload
-
-        Note:
-            will try ../prosper/warehouse/schemas first
-        Args:
-            source_path (str): path to schema
-
-        Returns:
-            (:obj:`dict`) parsed JSON file
-
-        """
+        """single file update style"""
         prod_fullpath = path.join(PROD_SCHEMA_PATH, source_path)
-        self.filename = path.basename(prod_fullpath)
+        self.filename_list.append(path.basename(prod_fullpath))
         if not path.isfile(prod_fullpath):
             if not path.isfile(source_path):
                 raise FileNotFoundError
@@ -243,7 +246,27 @@ class PushSchemas(cli.Application):
         with open(prod_fullpath, 'r') as data_fh:
             data = json.load(data_fh)
 
-        self.source = data
+        self.source_list.append(data)
+
+    @cli.switch(
+        ['f', '--folder'],
+        str,
+        help='Upload all schemas in path'
+    )
+    def override_folder_path(self, folder_path):
+        """upload all files in folder (with .schema file type)"""
+        if not folder_path:
+            folder_path = PROD_SCHEMA_PATH
+
+        if not path.isdir(folder_path):
+            raise FileNotFoundError
+
+        for schema_filename in listdir(folder_path):
+            if SCHEMA_FILETYPE not in schema_filename:
+                continue
+
+            schema_fullpath = path.join(folder_path, schema_filename)
+            self.override_source(schema_fullpath)
 
     major = cli.Flag(
         ['-M', '--major'],
@@ -264,6 +287,10 @@ class PushSchemas(cli.Application):
         logger = LOG_BUILDER.logger
         logger.info('HELLO WORLD -- PUSH')
 
+        if not self.source_list:
+            print('schema required -- Exiting')
+            exit(-1)
+
         logger.info('building mongo connector')
         connector = p_connection.ProsperWarehouse(
             'schemas',
@@ -272,40 +299,47 @@ class PushSchemas(cli.Application):
             logger=logger
         )
 
-        current_ver = find_schema_version(
-            connector,
-            logger=logger,
-            file_name=self.filename)
+        schema_count = len(self.source_list)
+        for index in cli.terminal.Progress(range(schema_count)):
+            file_name = self.filename_list[index]
+            source = self.source_list[index]
+            logger.info('Processing %s', file_name)
 
-        if current_ver:
-            do_update = validate_schema(
+            current_ver = find_schema_version(
                 connector,
-                self.source,
                 logger=logger,
-                file_name=self.filename,
-                version=str(current_ver)
+                file_name=file_name
             )
-        else:
-            do_update = True
 
-        if do_update:
-            logger.info('Updating remote schema')
-            current_ver = increment_version(
-                current_ver,
-                self.major,
-                self.minor
-            )
-            full_schema = add_schema_metadata(
-                self.source,
-                self.filename,
-                current_ver,
-                logger=logger
-            )
-            logger.info('Writing schema to database')
-            with connector as mongo_handle:
-                mongo_handle.insert_one(full_schema)
-        else:
-            logger.info('No update to do -- Have a nice day!')
+            if current_ver:
+                do_update = validate_schema(
+                    connector,
+                    source,
+                    logger=logger,
+                    file_name=file_name,
+                    version=str(current_ver)
+                )
+            else:
+                do_update = True
+
+            if do_update:
+                logger.info('Updating remote schema')
+                current_ver = increment_version(
+                    current_ver,
+                    self.major,
+                    self.minor
+                )
+                full_schema = add_schema_metadata(
+                    source,
+                    file_name,
+                    current_ver,
+                    logger=logger
+                )
+                logger.info('Writing schema to database')
+                with connector as mongo_handle:
+                    mongo_handle.insert_one(full_schema)
+            else:
+                logger.info('No update for %s', file_name)
 
 if __name__ == '__main__':
     ManagerScript.run()
