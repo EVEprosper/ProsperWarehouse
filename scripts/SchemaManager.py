@@ -3,6 +3,8 @@
 from datetime import datetime
 from os import path, listdir
 import json
+import yaml
+from enum import Enum
 
 import semantic_version
 from plumbum import cli
@@ -23,6 +25,11 @@ PROD_SCHEMA_PATH = path.join(ROOT, 'prosper', 'warehouse', 'schemas')
 MASTER_SCHEMA_PATH = path.join(ROOT, 'prosper', 'warehouse', 'master.schema')
 
 SCHEMA_FILETYPE = '.schema'
+
+class VersionFileMode(Enum):
+    """enum for switching yaml/json"""
+    yaml = 'yaml'
+    json = 'json'
 
 def find_schema_version(
         connector,
@@ -168,6 +175,29 @@ def add_schema_metadata(
 
     return full_schema
 
+def single_schema_write(
+        schema_name,
+        connector,
+        version_file,
+        mode=VersionFileMode.yaml,
+        logger=p_logging.DEFAULT_LOGGER
+):
+    """write a single schema and update to file
+
+    Args:
+        schema_name (str): name of schema to pull down
+        connector (:obj:`connections.ProsperWarehouse): connection to db
+        version_file (str): path to version file
+        mode (:enum:, optional): which mode to write with (YAML, JSON)
+        logger (:obj:`logging.logger`, optional): logging handle
+
+    Returns:
+        None
+
+    """
+    logger.info('Updating single schema %s', schema_name)
+
+
 LOG_BUILDER = None
 DEBUG = None
 class ManagerScript(cli.Application):
@@ -216,10 +246,65 @@ class ManagerScript(cli.Application):
 class PullSchemas(cli.Application):
     """pulls current schemas down for packaging"""
 
+    update_all = cli.Flag(
+        ['a', '--all'],
+        help='Update all schemas from remote store'
+    )
+
+    single_schema = ''
+    @cli.switch(
+        ['s', '--schema'],
+        str,
+        help='Download/update specific schema'
+    )
+    def override_single_schema(self, schema_name):
+        """update single schema"""
+        self.single_schema = schema_name
+
+    version_file = path.join(MASTER_SCHEMA_PATH, 'version_info.yml')
+    version_mode = VersionFileMode.yaml
+    @cli.switch(
+        ['--version_file'],
+        str,
+        help='Change version file'
+    )
+    def override_version_file(self, version_filename):
+        """update version info file"""
+        self.version_file = version_filename
+
+        if '.yaml' in version_filename or '.yml' in version_filename:
+            self.version_mode = VersionFileMode.yaml
+        elif '.json' in version_filename:
+            self.version_mode = VersionFileMode.json
+        else:
+            raise NotImplementedError('{} file format not supported'.format(version_filename))
+
     def main(self):
         """core logic goes here"""
         logger = LOG_BUILDER.logger
         logger.info('HELLO WORLD -- PULL')
+
+        if self.single_schema and self.update_all:
+            print('Make up your mind - One or all?!')
+            exit(-1)
+
+        logger.info('Building mongo connector')
+        connector = p_connection.ProsperWarehouse(
+            'schemas',
+            config=CONFIG,
+            testmode=DEBUG,
+            logger=logger
+        )
+
+        if self.single_schema:
+            single_schema_write(
+                self.single_schema,
+                connector,
+                self.version_file,
+                mode=self.version_mode,
+                logger=logger
+            )
+
 
 @ManagerScript.subcommand('push')
 class PushSchemas(cli.Application):
@@ -282,6 +367,7 @@ class PushSchemas(cli.Application):
         ['--no-release'],
         help='Debug release -- No prod version'
     )
+
     def main(self):
         """core logic goes here"""
         logger = LOG_BUILDER.logger
@@ -291,7 +377,7 @@ class PushSchemas(cli.Application):
             print('schema required -- Exiting')
             exit(-1)
 
-        logger.info('building mongo connector')
+        logger.info('Building mongo connector')
         connector = p_connection.ProsperWarehouse(
             'schemas',
             config=CONFIG,
