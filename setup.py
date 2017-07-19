@@ -109,8 +109,7 @@ setup(
     include_package_data=True,
     data_files=[
         ('docs', include_all_subfiles('docs')),
-        ('tests', include_all_subfiles('tests')),
-        ('scripts', include_all_subfiles('scripts'))
+        ('tests', include_all_subfiles('tests'))
     ],
     package_data={
         'prosper':[
@@ -125,6 +124,7 @@ setup(
         'pymongo~=3.4.0',
         'tinymongo~=0.1.8.dev0',
         'tinydb_serialization~=1.0.4',
+        'PyYAML~=3.12',
         'pandas',
         'ujson',
         'semantic_version'

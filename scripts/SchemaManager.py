@@ -197,6 +197,77 @@ def single_schema_write(
     """
     logger.info('Updating single schema %s', schema_name)
 
+    raise NotImplementedError()
+
+def get_latest_schema(
+        schema_name,
+        connector,
+        logger=p_logging.DEFAULT_LOGGER
+):
+    """find latest schema for schema_name
+
+    Args:
+        schema_name (str): name of schema
+        connector (:obj:`connections.ProsperWarehouse): connection to db
+        logger (:obj:`logging.logger`, optional): logging handle
+
+    Returns:
+        (:obj:`dict`): schema entry
+        (:obj:`semantic_version.Version`): current version
+
+    """
+    logger.info('--finding latest schema for %s', schema_name)
+    by_version = {}
+    with connector as mongo_handle:
+        data = list(mongo_handle.find({'name': schema_name}))
+        ## NOTE: projection() not supported by tinymongo
+
+    for schema in data:
+        ver_obj = semantic_version.Version(schema['version'])
+        by_version[ver_obj] = schema['schema']
+
+    max_version = max(by_version.keys())
+    logger.info('--using version: %s', str(max_version))
+
+    current_schema = by_version[max_version]
+    logger.debug(current_schema)
+    return current_schema, max_version
+
+def load_version_file(
+        version_file_path,
+        version_file_type,
+        logger=p_logging.DEFAULT_LOGGER
+):
+    """load current version file from disk
+
+    Args:
+        version_file_path (str): path to version file
+        version_file_type (:enum:): info on which parser to use
+        logger (:obj:`logging.logger`, optional): logging handle
+
+    Returns:
+        (:obj:`dict`): version info
+
+    """
+    if not path.isfile(version_file_path):
+        logger.info('--No existing version file found at %s, building new file', version_file_path)
+        return {}
+
+    if version_file_type == VersionFileMode.yaml:
+        logger.info('--parsing yaml file')
+        with open(version_file_path, 'r') as data_fh:
+            data = yaml.load_all(data_fh)
+
+    elif version_file_type == VersionFileMode.json:
+        logger.info('--parsing json file')
+        with open(version_file_path, 'r') as data_fh:
+            data = json.load(data_fh)
+
+    else:
+        raise NotImplementedError('Unsupported file format {}'.format(version_file_type.value))
+
+    logger.debug(data)
+    return data
 
 LOG_BUILDER = None
 DEBUG = None
@@ -296,14 +367,52 @@ class PullSchemas(cli.Application):
             logger=logger
         )
 
-        if self.single_schema:
-            single_schema_write(
-                self.single_schema,
-                connector,
-                self.version_file,
-                mode=self.version_mode,
-                logger=logger
-            )
+        version_obj = load_version_file(
+            version_file,
+            version_mode,
+            logger=logger
+        )
+##        if self.single_schema:
+##            single_schema_write(
+##                self.single_schema,
+##                connector,
+##                self.version_file,
+##                mode=self.version_mode,
+##                logger=logger
+##            )
+##
+##            exit(1) #Nothing left to do, we're good here
+##
+##        logger.info('Fetching schemas')
+##        with connector as mongo_handle:
+##            all_schemas = mongo_handle.distinct('name')
+##
+##        schema_info = {}
+##        for schema_name in all_schemas:
+##            logger.info('--Processing {}'.format(schema_name))
+##            latest_schema, version = get_latest_schema(
+##                schema_name,
+##                connector,
+##                logger=logger
+##            )
+##
+##            path_to_schema = update_schema(
+##                latest_schema,
+##                schema_name,
+##                logger=logger
+##            )
+##
+##            schema_info = update_schema_info(
+##                schema_name,
+##                version,
+##                path_to_schema,
+##                logger=logger
+##            )
+##            #schema_info[schema_name] = {}
+##            #schema_info[schema_name]['name'] = schema_name
+##            #schema_info[schema_name]['path'] = path_to_schema
+##            #schema_info[schema_name]['version'] = str(version)
+##            #schema_info[schema_name]['updated'] = None #TODO
 
 
 @ManagerScript.subcommand('push')
