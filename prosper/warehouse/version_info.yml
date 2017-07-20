@@ -1,0 +1,21 @@
+crest_markethistory:
+  date: '2017-07-16T18:18:43.323486'
+  name: crest_markethistory
+  path: crest_markethistory.schema
+  update_time: '2017-07-20T23:11:50.800320'
+  version: 1.0.0
+  version_numeric: '100000000.0'
+esi_killmails:
+  date: '2017-07-16T18:18:45.865241'
+  name: esi_killmails
+  path: esi_killmails.schema
+  update_time: '2017-07-20T23:11:50.800320'
+  version: 1.0.0
+  version_numeric: '100000000.0'
+zkb_killmail:
+  date: '2017-07-16T18:18:48.657204'
+  name: zkb_killmail
+  path: zkb_killmail.schema
+  update_time: '2017-07-20T23:11:50.800320'
+  version: 1.0.0
+  version_numeric: '100000000.0'

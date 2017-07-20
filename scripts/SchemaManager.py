@@ -264,6 +264,7 @@ def update_version_info_file(
 
     """
     logger.info('Updating version_info file %s', version_file_path)
+    logger.debug(version_info_obj)
 
     with open(version_file_path, 'w') as v_fh:
         if version_file_type == VersionFileMode.yaml:
