@@ -280,7 +280,7 @@ def update_version_info_file(
 def get_local_schema(
         schema_name,
         schema_filetype=SCHEMA_FILETYPE,
-        schema_path=MASTER_SCHEMA_PATH,
+        schema_path=PROD_SCHEMA_PATH,
         logger=p_logging.DEFAULT_LOGGER
 ):
     """try to load current schema from local path
@@ -314,7 +314,7 @@ def update_local_schema(
         schema_name,
         schema_object,
         schema_filetype=SCHEMA_FILETYPE,
-        schema_path=MASTER_SCHEMA_PATH,
+        schema_path=PROD_SCHEMA_PATH,
         logger=p_logging.DEFAULT_LOGGER,
         **kwargs
 ):
@@ -345,7 +345,7 @@ def update_local_schema(
     schema_info = {}
     schema_info['name'] = schema_name
     schema_info['path'] = path.join(path.dirname(schema_path), schema_name + schema_filetype)
-    for key, value in kwargs:
+    for key, value in kwargs.items():
         schema_info[key] = str(value)   #avoid type errors when writing data file
 
     logger.debug(schema_info)
@@ -415,7 +415,7 @@ class PullSchemas(cli.Application):
         """update single schema"""
         self.single_schema = schema_name
 
-    version_file = path.join(MASTER_SCHEMA_PATH, 'version_info.yml')
+    version_file = path.join(path.dirname(MASTER_SCHEMA_PATH), 'version_info.yml')
     version_mode = VersionFileMode.yaml
     @cli.switch(
         ['--version_file'],
@@ -467,7 +467,7 @@ class PullSchemas(cli.Application):
             logger=logger
         )
 
-        now = datetime.utcnow.isoformat()
+        now = datetime.utcnow().isoformat()
 
         logger.info('Loading schema list')
         schema_list = []
@@ -481,9 +481,14 @@ class PullSchemas(cli.Application):
         for schema_name in cli.terminal.Progress(schema_list):
             logger.info('SCHEMA: %s', schema_name)
 
+            if schema_name == 'master':
+                logger.info('--skipping schema %s', schema_name)
+                continue
+
             if schema_name not in version_info.keys():
                 logger.info('--Schema does not exist in version_info')
                 version_info[schema_name] = {}
+                version_info[schema_name]['version'] = '0.0.0'
 
             full_schema = get_latest_schema(
                 schema_name,
@@ -502,7 +507,7 @@ class PullSchemas(cli.Application):
 
             if not current_local_schema == latest_schema:
                 logger.info('Update required')
-                if version < semantic_version.Version(version_info[latest_schema]['version']):
+                if version < semantic_version.Version(version_info[schema_name]['version']):
                     logger.warning(
                         'local version (%s) > remote version (%s). Skipping write on file %s',
                         str(version),
