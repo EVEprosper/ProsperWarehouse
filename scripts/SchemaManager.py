@@ -1,15 +1,16 @@
 """SchemaManager.py: helper script for syncronizing library schemas with SoT"""
 
 from datetime import datetime
-from os import path, listdir
-import json
-import yaml
 from enum import Enum
+from os import path, listdir, remove
+import json
+import time
 import warnings
 
-import semantic_version
-from plumbum import cli
 from jsonschema import validate
+from plumbum import cli
+import semantic_version
+import yaml
 
 import prosper.common.prosper_logging as p_logging
 import prosper.common.prosper_config as p_config
@@ -367,6 +368,8 @@ class ManagerScript(cli.Application):
         ['d', '--debug'],
         help='debug mode: do not write to live database'
     )
+
+
     @cli.switch(
         ['v', '--verbose'],
         help='Enable verbose messaging'
@@ -400,10 +403,9 @@ class ManagerScript(cli.Application):
 @ManagerScript.subcommand('pull')
 class PullSchemas(cli.Application):
     """pulls current schemas down for packaging"""
-
-    update_all = cli.Flag(
-        ['a', '--all'],
-        help='Update all schemas from remote store'
+    clean = cli.Flag(
+        ['--clean'],
+        help='nuke & pave existing info.  Hard pull from db'
     )
 
     single_schema = ''
@@ -449,9 +451,16 @@ class PullSchemas(cli.Application):
         logger = LOG_BUILDER.logger
         logger.info('HELLO WORLD -- PULL')
 
-        if self.single_schema and self.update_all:
-            print('Make up your mind - One or all?!')
-            exit(-1)
+        if self.clean:
+            logger.warning('Clearing files')
+            time.sleep(10)
+            logger.warning('--Removing %s', self.version_file)
+            remove(self.version_file)
+            logger.warning('--Removing schema files from %s', self.schema_path)
+            for schema in listdir(self.schema_path):
+                full_path = path.join(self.schema_path, schema)
+                logger.warnging('----%s', full_path)
+                remove(full_path)
 
         logger.info('Building mongo connector')
         connector = p_connection.ProsperWarehouse(
