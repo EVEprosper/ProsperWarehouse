@@ -368,8 +368,8 @@ class PullSchemas(cli.Application):
         )
 
         version_obj = load_version_file(
-            version_file,
-            version_mode,
+            self.version_file,
+            self.version_mode,
             logger=logger
         )
 ##        if self.single_schema:

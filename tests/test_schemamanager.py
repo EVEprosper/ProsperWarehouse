@@ -6,6 +6,7 @@ import importlib.util
 import pytest
 import helpers
 
+import semantic_version
 SchemaManager = None
 
 HERE = path.abspath(path.dirname(__file__))
@@ -37,3 +38,23 @@ def test_load_schemamanager():
     spec.loader.exec_module(module)
 
     SchemaManager = module
+
+def test_find_schema_version():
+    """validate find_schema_version() function"""
+    if not SchemaManager:
+        pytest.xfail('Unable to load module')
+
+def test_validate_schema_matches():
+    """validate validate_schema() -- matching"""
+    if not SchemaManager:
+        pytest.xfail('Unable to load module')
+
+def test_validate_schema_diff():
+    """validate validate_schema() -- diff"""
+    if not SchemaManager:
+        pytest.xfail('Unable to load module')
+
+def test_load_version_file():
+    """validate load_version_file() expected behavior"""
+    if not SchemaManager:
+        pytest.xfail('Unable to load module')
