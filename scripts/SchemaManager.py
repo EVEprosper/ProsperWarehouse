@@ -5,6 +5,7 @@ from os import path, listdir
 import json
 import yaml
 from enum import Enum
+import warnings
 
 import semantic_version
 from plumbum import cli
@@ -14,6 +15,7 @@ import prosper.common.prosper_logging as p_logging
 import prosper.common.prosper_config as p_config
 import prosper.warehouse.connections as p_connection
 import prosper.warehouse._version as p_version
+import prosper.warehouse.exceptions as exceptions
 
 HERE = path.abspath(path.dirname(__file__))
 ROOT = path.dirname(HERE)
@@ -165,8 +167,8 @@ def add_schema_metadata(
 
     logger.debug(full_schema)
 
-    with open(master_schema_path, 'r') as vfh:
-        master_schema = json.load(vfh)
+    with open(master_schema_path, 'r') as version_fh:
+        master_schema = json.load(version_fh)
 
     ## Validator will throw if there is issue
     test_schema = full_schema
@@ -174,30 +176,6 @@ def add_schema_metadata(
     validate(test_schema, master_schema)
 
     return full_schema
-
-def single_schema_write(
-        schema_name,
-        connector,
-        version_file,
-        mode=VersionFileMode.yaml,
-        logger=p_logging.DEFAULT_LOGGER
-):
-    """write a single schema and update to file
-
-    Args:
-        schema_name (str): name of schema to pull down
-        connector (:obj:`connections.ProsperWarehouse): connection to db
-        version_file (str): path to version file
-        mode (:enum:, optional): which mode to write with (YAML, JSON)
-        logger (:obj:`logging.logger`, optional): logging handle
-
-    Returns:
-        None
-
-    """
-    logger.info('Updating single schema %s', schema_name)
-
-    raise NotImplementedError()
 
 def get_latest_schema(
         schema_name,
@@ -213,7 +191,6 @@ def get_latest_schema(
 
     Returns:
         (:obj:`dict`): schema entry
-        (:obj:`semantic_version.Version`): current version
 
     """
     logger.info('--finding latest schema for %s', schema_name)
@@ -224,14 +201,14 @@ def get_latest_schema(
 
     for schema in data:
         ver_obj = semantic_version.Version(schema['version'])
-        by_version[ver_obj] = schema['schema']
+        by_version[ver_obj] = schema
 
     max_version = max(by_version.keys())
     logger.info('--using version: %s', str(max_version))
 
     current_schema = by_version[max_version]
     logger.debug(current_schema)
-    return current_schema, max_version
+    return current_schema
 
 def load_version_file(
         version_file_path,
@@ -253,21 +230,127 @@ def load_version_file(
         logger.info('--No existing version file found at %s, building new file', version_file_path)
         return {}
 
-    if version_file_type == VersionFileMode.yaml:
-        logger.info('--parsing yaml file')
-        with open(version_file_path, 'r') as data_fh:
-            data = yaml.load_all(data_fh)
+    with open(version_file_path, 'r') as v_fh:
+        if version_file_type == VersionFileMode.yaml:
+            logger.info('--Parsing file: YAML')
+            data = yaml.load_all(v_fh)
 
-    elif version_file_type == VersionFileMode.json:
-        logger.info('--parsing json file')
-        with open(version_file_path, 'r') as data_fh:
-            data = json.load(data_fh)
+        elif version_file_type == VersionFileMode.json:
+            logger.info('--Parsing file: JSON')
+            data = json.load(v_fh)
 
-    else:
-        raise NotImplementedError('Unsupported file format {}'.format(version_file_type.value))
+        else:
+            raise NotImplementedError('Unsupported file format {}'.format(version_file_type.value))
 
     logger.debug(data)
     return data
+
+def update_version_info_file(
+        version_info_obj,
+        version_file_path,
+        version_file_type,
+        logger=p_logging.DEFAULT_LOGGER
+):
+    """write version_info to disk
+
+    Args:
+        version_info_obj (:obj:`dict`): version_info data
+        version_file_path (str): path to version file
+        version_file_type (:enum:): info on which parser to use
+        logger (:obj:`logging.logger`, optional): logging handle
+
+    Returns:
+        None
+
+    """
+    logger.info('Updating version_info file %s', version_file_path)
+
+    with open(version_file_path, 'w') as v_fh:
+        if version_file_type == VersionFileMode.yaml:
+            logger.info('--writing file: YAML')
+            yaml.dump(version_info_obj, v_fh, default_flow_style=False)
+
+        elif version_file_type == VersionFileMode.json:
+            logger.info('writing file: JSON')
+            json.dump(version_info_obj, v_fh, indent=4)
+
+        else:
+            raise NotImplementedError('Unsupported file format {}'.format(version_file_type.value))
+
+def get_local_schema(
+        schema_name,
+        schema_filetype=SCHEMA_FILETYPE,
+        schema_path=MASTER_SCHEMA_PATH,
+        logger=p_logging.DEFAULT_LOGGER
+):
+    """try to load current schema from local path
+
+    Args:
+        schema_name (str): name of schema
+        schema_filetype (str, optional): file extension for schema files
+        schema_path (str, optional): where to look for schema files
+        logger (:obj:`logging.logger`, optional): logging handle
+
+    Returns:
+        (:obj:`dict`): current schema (or empty)
+
+    """
+    logger.info('Fetching schema from local: %s', schema_name)
+
+    full_schema_path = path.join(schema_path, schema_name + schema_filetype)
+    logger.debug(full_schema_path)
+
+    try:
+        with open(full_schema_path, 'r') as schema_fh:
+            schema = json.load(schema_fh)
+    except Exception:
+        logger.warning('Unable to load: %s', full_schema_path, exc_info=True)
+        schema = {}
+
+    logger.debug(schema)
+    return schema
+
+def update_local_schema(
+        schema_name,
+        schema_object,
+        schema_filetype=SCHEMA_FILETYPE,
+        schema_path=MASTER_SCHEMA_PATH,
+        logger=p_logging.DEFAULT_LOGGER,
+        **kwargs
+):
+    """save remote schema to local file
+
+    Args:
+        schema_name (str): name of schema
+        schema_object (:obj:`dict`): new schema object
+        update_time (str): datetime of update
+        schema_filetype (str, optional): file extension for schema files
+        schema_path (str, optional): where to look for schema files
+        logger (:obj:`logging.logger`, optional): logging handle
+        **kwargs schema_info keys/values
+
+    Returns:
+        (:obj:`dict`): schema info for latest version
+
+    """
+    logger.info('Updating local schema: %s', schema_name)
+
+    full_schema_path = path.join(schema_path, schema_name + schema_filetype)
+
+    logger.info('--Writing schema to: %s', full_schema_path)
+    with open(full_schema_path, 'w') as schema_fh:
+        json.dump(schema_object, schema_fh)
+
+    logger.info('--Updating schema_info')
+    schema_info = {}
+    schema_info['name'] = schema_name
+    schema_info['path'] = path.join(path.dirname(schema_path), schema_name + schema_filetype)
+    for key, value in kwargs:
+        schema_info[key] = str(value)   #avoid type errors when writing data file
+
+    logger.debug(schema_info)
+
+    return schema_info
 
 LOG_BUILDER = None
 DEBUG = None
@@ -350,6 +433,16 @@ class PullSchemas(cli.Application):
         else:
             raise NotImplementedError('{} file format not supported'.format(version_filename))
 
+    schema_path = PROD_SCHEMA_PATH
+    @cli.switch(
+        ['p', '--path'],
+        str,
+        help='Override local schema path {}'.format(PROD_SCHEMA_PATH)
+    )
+    def override_schema_path(self, schema_path):
+        """update schema_path"""
+        self.schema_path = schema_path
+
     def main(self):
         """core logic goes here"""
         logger = LOG_BUILDER.logger
@@ -367,53 +460,81 @@ class PullSchemas(cli.Application):
             logger=logger
         )
 
-        version_obj = load_version_file(
+        logger.info('Loading version_info file %s', self.version_file)
+        version_info = load_version_file(
             self.version_file,
             self.version_mode,
             logger=logger
         )
-##        if self.single_schema:
-##            single_schema_write(
-##                self.single_schema,
-##                connector,
-##                self.version_file,
-##                mode=self.version_mode,
-##                logger=logger
-##            )
-##
-##            exit(1) #Nothing left to do, we're good here
-##
-##        logger.info('Fetching schemas')
-##        with connector as mongo_handle:
-##            all_schemas = mongo_handle.distinct('name')
-##
-##        schema_info = {}
-##        for schema_name in all_schemas:
-##            logger.info('--Processing {}'.format(schema_name))
-##            latest_schema, version = get_latest_schema(
-##                schema_name,
-##                connector,
-##                logger=logger
-##            )
-##
-##            path_to_schema = update_schema(
-##                latest_schema,
-##                schema_name,
-##                logger=logger
-##            )
-##
-##            schema_info = update_schema_info(
-##                schema_name,
-##                version,
-##                path_to_schema,
-##                logger=logger
-##            )
-##            #schema_info[schema_name] = {}
-##            #schema_info[schema_name]['name'] = schema_name
-##            #schema_info[schema_name]['path'] = path_to_schema
-##            #schema_info[schema_name]['version'] = str(version)
-##            #schema_info[schema_name]['updated'] = None #TODO
 
+        now = datetime.utcnow.isoformat()
+
+        logger.info('Loading schema list')
+        schema_list = []
+        if self.single_schema:
+            schema_list = self.single_schema
+        else:
+            with connector as mongo_handle:
+                schema_list = mongo_handle.distinct('name')
+
+        logger.info('Processing Schemas')
+        for schema_name in cli.terminal.Progress(schema_list):
+            logger.info('SCHEMA: %s', schema_name)
+
+            if schema_name not in version_info.keys():
+                logger.info('--Schema does not exist in version_info')
+                version_info[schema_name] = {}
+
+            full_schema = get_latest_schema(
+                schema_name,
+                connector,
+                logger=logger
+            )
+
+            latest_schema = full_schema['schema']
+            version = semantic_version.Version(full_schema['version'])
+
+            current_local_schema = get_local_schema(
+                schema_name,
+                schema_path=self.schema_path,
+                logger=logger
+            )
+
+            if not current_local_schema == latest_schema:
+                logger.info('Update required')
+                if version < semantic_version.Version(version_info[latest_schema]['version']):
+                    logger.warning(
+                        'local version (%s) > remote version (%s). Skipping write on file %s',
+                        str(version),
+                        version_info[schema_name]['version'],
+                        path.join(self.schema_path, schema_name + SCHEMA_FILETYPE))
+                    warnings.warn(
+                        'local version > remote version?',
+                        exceptions.VersionMismatchWarning())
+                    continue
+
+                version_info[schema_name] = update_local_schema(
+                    schema_name,
+                    latest_schema,
+                    schema_path=self.schema_path,
+                    logger=logger,
+                    update_time=now,
+                    date=full_schema['date'],
+                    version=str(version),
+                    version_numeric=full_schema['version_numeric']
+                )
+
+            else:
+                logger.info('%s up-to-date v%s', schema_name, str(version))
+
+        update_version_info_file(
+            version_info,
+            self.version_file,
+            self.version_mode,
+            logger=logger
+        )
+
+        logger.info('OP Success :D')
 
 @ManagerScript.subcommand('push')
 class PushSchemas(cli.Application):

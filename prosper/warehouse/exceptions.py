@@ -38,3 +38,6 @@ class LibrarySchemaWarning(WarehouseWarning):
 class LocalOverrideSchemaWarning(WarehouseWarning):
     """warning for being in debug mode on non-produciton schema"""
     pass
+class VersionMismatchWarning(WarehouseWarning):
+    """Local version > remote version. Remote needs update"""
+    pass
