@@ -59,8 +59,9 @@ def test_test_mongo_happypath():
         helpers.TEST_RECORD,
         test_collection
     )
-    with test_connector as mongo_handle:
-        test_data = mongo_handle.find_one({})
+    with pytest.warns(exceptions.TestModeWarning):
+        with test_connector as mongo_handle:
+            test_data = mongo_handle.find_one({})
 
     test_data.pop('_id')    #projection doesn't work with tinymongo
     assert test_data == expected_data
