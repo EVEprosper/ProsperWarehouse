@@ -8,11 +8,50 @@ import tinymongo
 import tinydb_serialization
 
 import prosper.common.prosper_logging as p_logging
+import prosper.warehouse.exceptions as exceptions
 
+#__all__ = ('ProsperTinyMongo')
 DEFAULT_PROJECTION = {
     '_id': False,
     'metadata': False
 }
+
+def monkey_patch_find(
+        self,
+        q_filter=None,
+        sort=None,
+        skip=None,
+        limit=None,
+        projection=None,
+        *args,
+        **kwargs
+):
+    """monkeypatching in support/warning for projection() support
+
+    Args:
+        q_filter (:obj:`dict`): mongo-style search query
+        sort (bool, optional): sort direction
+        skip (int, optional): pagination support, number of entries to skip
+        limit (int, optional): limit total returned entries from query
+        projection (:obj:`dict`): mongo-style `SELECT` support
+
+    Returns:
+        (:obj:`tinymongo.TinyMongoCursor`)
+    """
+
+    return_val = self.prod_find(q_filter, sort, skip, limit, *args, **kwargs)
+
+    return return_val
+
+########################
+## Monkey Patch Magic ##
+########################
+prod_find = tinymongo.tinymongo.TinyMongoCollection.find
+tinymongo.tinymongo.TinyMongoCollection.find = monkey_patch_find
+tinymongo.tinymongo.TinyMongoCollection.prod_find = prod_find
+########################
+## Monkey Patch Magic ##
+########################
 
 SPECIAL_KEYS = ['_id']  #ALWAYS DROP
 def test_tinydb_projection(projection):
@@ -115,34 +154,6 @@ def drop_filter(filter_list, data):
         clean_data.append(filtered_data.pop(SPECIAL_KEYS))
 
     return clean_data
-
-def build_connection_str(config_obj, database):
-    """parse out the connection string
-
-    Args:
-        config_obj (:obj:`p_config.ProsperConfig`): config object with options
-        database (str): which db to connect to
-    Returns:
-        (str) connection str (without password)
-
-    """
-    conn_str = CONNECTION_STR
-    if config_obj.get('WAREHOUSE', 'mongo_str'):
-        conn_str = config_obj.get('WAREHOUSE', 'mongo_str')
-        mongo_str = conn_str.format(
-            username=config_obj.get('WAREHOUSE', 'mongo_user'),
-            port=config_obj.get('WAREHOUSE', 'mongo_port'),
-            database=database
-        )
-        return mongo_str
-
-    mongo_str = conn_str.format(
-        username=config_obj.get('WAREHOUSE', 'mongo_user'),
-        hostname=config_obj.get('WAREHOUSE', 'mongo_host'),
-        port=config_obj.get('WAREHOUSE', 'mongo_port'),
-        database=database
-    )
-    return mongo_str
 
 class DateTimeSerializer(tinydb_serialization.Serializer):
     """TinyDB serializer:
