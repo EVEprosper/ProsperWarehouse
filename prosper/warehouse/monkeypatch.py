@@ -18,7 +18,7 @@ DEFAULT_PROJECTION = {
 
 def monkey_patch_find(
         self,
-        q_filter=None,
+        filter=None,
         sort=None,
         skip=None,
         limit=None,
@@ -39,7 +39,7 @@ def monkey_patch_find(
         (:obj:`tinymongo.TinyMongoCursor`)
     """
 
-    return_val = self.prod_find(q_filter, sort, skip, limit, *args, **kwargs)
+    return_val = self.prod_find(filter, sort, skip, limit, *args, **kwargs)
 
     return return_val
 
