@@ -1,0 +1,5 @@
+[report]
+    omit = prosper/datareader/_version.py
+
+[paths]
+    source = prosper/datareader

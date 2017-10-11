@@ -1,11 +1,14 @@
 """Wheel for ProsperWarehouse project"""
-
+from codecs import open
+import importlib
 from os import path, listdir
+
 from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
-import importlib
 
 HERE = path.abspath(path.dirname(__file__))
+__package_name__ = 'ProsperWarehouse'
+__library_name__ = 'warehouse'
 
 def get_version(package_name):
     """find __version__ for making package
@@ -14,10 +17,10 @@ def get_version(package_name):
         package_path (str): path to _version.py folder (abspath > relpath)
 
     Returns:
-        (str) __version__ value
+        str: __version__ value
 
     """
-    module = package_name + '._version'
+    module = 'prosper.' + package_name + '._version'
     package = importlib.import_module(module)
 
     version = package.__version__
@@ -46,7 +49,7 @@ def include_all_subfiles(*args):
         Not recursive, only includes flat files
 
     Returns:
-        (:obj:`list` :obj:`str`) list of all non-directories in a file
+        :obj:`list`: list of all non-directories in a file
 
     """
     file_list = []
@@ -67,51 +70,72 @@ class PyTest(TestCommand):
     http://doc.pytest.org/en/latest/goodpractices.html#manual-integration
 
     """
-    user_options = [('pytest-args=', 'a', "Arguments to pass to pytest")]
+    user_options = [('pytest-args=', 'a', 'Arguments to pass to pytest')]
 
     def initialize_options(self):
         TestCommand.initialize_options(self)
         self.pytest_args = [
             'tests',
             '-rx',
-            '--cov=prosper/',
-            '--cov-report=term-missing'
+            '-v',
+            '--cov=prosper/' + __library_name__,
+            '--cov-report=term-missing',
+            '--cov-config=.coveragerc'
         ]    #load defaults here
 
     def run_tests(self):
         import shlex
-        #import here, cause outside the eggs aren't loaded
+        # import here, because outside the eggs aren't loaded
         import pytest
         pytest_commands = []
-        try:    #read commandline
+        try:
             pytest_commands = shlex.split(self.pytest_args)
-        except AttributeError:  #use defaults
+        except AttributeError:
             pytest_commands = self.pytest_args
         errno = pytest.main(pytest_commands)
         exit(errno)
 
-__package_name__ = 'ProsperWarehouse'
-__version__ = get_version('prosper.warehouse')
+class QuickTest(PyTest):
+    """wrapper for quick-testing for devs"""
+    user_options = [('pytest-args=', 'a', 'Arguments to pass to pytest')]
+
+    def initialize_options(self):
+        TestCommand.initialize_options(self)
+        self.pytest_args = [
+            'tests',
+            '-rx',
+            '-n',
+            '4',
+            '--cov=prosper/' + __library_name__,
+            '--cov-report=term-missing',
+            '--cov-config=.coveragerc'
+        ]
+
+with open('README.rst', 'r', 'utf-8') as f:
+    readme = f.read()
 
 setup(
     name=__package_name__,
+    description='Database connector and nosql validator for Prosper projects',
+    long_description=readme,
     author='John Purcell',
     author_email='prospermarketshow@gmail.com',
     url='https://github.com/EVEprosper/' + __package_name__,
-    download_url='https://github.com/EVEprosper/' + __package_name__ + '/tarball/v' + __version__,
-    version=__version__,
+    download_url='https://pypi.python.org/pypi/ProsperWarehouse',
+    version=get_version(__library_name__),
     license='MIT',
     classifiers=[
-        'Programming Language :: Python :: 3.5'
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6'
     ],
     keywords='prosper eveonline api database',
     packages=hack_find_packages('prosper'),
     include_package_data=True,
     data_files=[
-        ('docs', include_all_subfiles('docs')),
-        ('tests', include_all_subfiles('tests'))
+
     ],
     package_data={
+        '': ['LICENSE', 'README.rst'],
         'prosper':[
             'warehouse/schemas/*',
             'warehouse/warehouse.cfg',
@@ -119,26 +143,31 @@ setup(
         ]
     },
     install_requires=[
-        'ProsperCommon',  #--extra-index-url=https://repo.fury.io/lockefox/
-        'jsonschema~=2.6.0',
-        'pymongo~=3.4.0',
-        'tinymongo~=0.1.8.dev0',
-        'tinydb_serialization~=1.0.4',
-        'PyYAML~=3.12',
+        'prospercommon',
+        'jsonschema',
+        'pymongo',
+        'tinymongo',
+        'tinydb_serialization',
+        #'PyYAML~=3.12',
         'pandas',
         'ujson',
         'semantic_version'
     ],
     tests_require=[
-        'pytest~=3.1.0',
-        'pytest_cov~=2.4.0'
+        'pytest',
+        'pytest_cov',
+        'pytest-xdist'
     ],
     extras_require={
         'dev':[
-            'plumbum~=1.6.3'
+            'plumbum',
+            'pandas-datareader',
+            'sphinx',
+            'sphinxcontrib-napoleon'
         ]
     },
     cmdclass={
-        'test':PyTest
+        'test':PyTest,
+        'fast': QuickTest
     }
 )
