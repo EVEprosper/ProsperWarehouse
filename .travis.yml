@@ -5,6 +5,8 @@ python:
 cache: pip
 install: 
   - "pip install ."
+script: 
+  - "python setup.py test"
 after_success:
   - "pip install python-coveralls"
   - "coveralls"
